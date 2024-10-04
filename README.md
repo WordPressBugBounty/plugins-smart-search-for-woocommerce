@@ -1,0 +1,1 @@
+# plugins-smart-search-for-woocommerce
