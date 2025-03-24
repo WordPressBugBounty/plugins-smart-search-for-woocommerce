@@ -1080,8 +1080,8 @@ class Async {
 	/**
 	 * Returns related product ids
 	 *
-	 * @param WC_Product $product Product data.
-	 * @param int        $limit          Maximum related products.
+	 * @param \WC_Product $product Product data.
+	 * @param int         $limit          Maximum related products.
 	 *
 	 * @return array
 	 */
@@ -1293,10 +1293,10 @@ class Async {
 	/**
 	 * Generate product prices for usergroups
 	 *
-	 * @param array      $entry             Product entry.
-	 * @param WC_Product $product_data      WC product.
-	 * @param string     $lang_code         Lang code.
-	 * @param array      $children_products Children products.
+	 * @param array       $entry             Product entry.
+	 * @param \WC_Product $product_data      WC product.
+	 * @param string      $lang_code         Lang code.
+	 * @param array       $children_products Children products.
 	 *
 	 * @return boolean
 	 */
@@ -1378,9 +1378,9 @@ class Async {
 	/**
 	 * Generate product prices for current usergroup
 	 *
-	 * @param WC_Product $product_data      WC product data.
-	 * @param array      $children_products Children products.
-	 * @param string     $lang_code         Lang code.
+	 * @param \WC_Product $product_data      WC product data.
+	 * @param array       $children_products Children products.
+	 * @param string      $lang_code         Lang code.
 	 *
 	 * @return array
 	 */
@@ -1479,7 +1479,7 @@ class Async {
 		 * @since 1.0.0
 		 *
 		 * @param array $prices            Usergroup prices data
-		 * @param WC_Product $product_data Product data
+		 * @param \WC_Product $product_data Product data
 		 * @param array $children_products Product children (for grouped product)
 		 * @param string $lang_code        Lang code
 		 */
@@ -1489,7 +1489,7 @@ class Async {
 	/**
 	 * Generates product prices for Variable product
 	 *
-	 * @param WC_Product_Variable $product_data Product data.
+	 * @param \WC_Product_Variable $product_data Product data.
 	 *
 	 * @return array
 	 */
@@ -1525,7 +1525,7 @@ class Async {
 	/**
 	 * Get simple product's prices array
 	 *
-	 * @param WC_Product $product_data Product data.
+	 * @param \WC_Product $product_data Product data.
 	 *
 	 * @return array
 	 */
@@ -1558,8 +1558,8 @@ class Async {
 	/**
 	 * Returns available usergroups for product
 	 *
-	 * @param WC_Product $product_data Product data.
-	 * @param string     $lang_code    Lang code.
+	 * @param \WC_Product $product_data Product data.
+	 * @param string      $lang_code    Lang code.
 	 *
 	 * @return array
 	 */
@@ -1581,7 +1581,7 @@ class Async {
 	/**
 	 * Returns add to cart url for product
 	 *
-	 * @param WC_Product $product_data Product data.
+	 * @param \WC_Product $product_data Product data.
 	 *
 	 * @return string
 	 */
@@ -1607,7 +1607,7 @@ class Async {
 	/**
 	 * Returns children products for group
 	 *
-	 * @param WC_Product_Grouped $product_data Product data.
+	 * @param \WC_Product_Grouped $product_data Product data.
 	 *
 	 * @return array
 	 */
@@ -1632,8 +1632,8 @@ class Async {
 	/**
 	 * Generate product data
 	 *
-	 * @param WC_Product $product_data Product data.
-	 * @param string     $lang_code        Lang code.
+	 * @param \WC_Product $product_data Product data.
+	 * @param string      $lang_code        Lang code.
 	 *
 	 * @return array
 	 */
@@ -2096,7 +2096,7 @@ class Async {
 		 * @since 1.0.0
 		 *
 		 * @param array $entry      Prepared product data
-		 * @param WC_Product        Original product data
+		 * @param \WC_Product        Original product data
 		 * @param string $lang_code Lang code
 		 */
 		return (array) apply_filters( 'se_prepare_product_data', $entry, $product_data, $lang_code );
@@ -2105,8 +2105,8 @@ class Async {
 	/**
 	 * Prepare product meta data
 	 *
-	 * @param WC_Product $product_data Product data.
-	 * @param string     $lang_code Lang code.
+	 * @param \WC_Product $product_data Product data.
+	 * @param string      $lang_code Lang code.
 	 *
 	 * @return array
 	 */
@@ -2385,8 +2385,8 @@ class Async {
 	/**
 	 * Get stock product status
 	 *
-	 * @param WC_Product $product   Product.
-	 * @param string     $lang_code Lang code.
+	 * @param \WC_Product $product   Product.
+	 * @param string      $lang_code Lang code.
 	 *
 	 * @return string
 	 */
@@ -2404,7 +2404,7 @@ class Async {
 		 * @since 1.0.0
 		 *
 		 * @param string $stock_status Stock status name
-		 * @param WC_Product           Product data
+		 * @param \WC_Product           Product data
 		 */
 		return apply_filters( 'se_get_stock_status', $stock_status, $product );
 	}
@@ -2412,8 +2412,8 @@ class Async {
 	/**
 	 * Get stock product quantity
 	 *
-	 * @param WC_Product $product          Product data.
-	 * @param array      $united_products  United product data.
+	 * @param \WC_Product $product          Product data.
+	 * @param array       $united_products  United product data.
 	 *
 	 * @return int
 	 */
@@ -2450,7 +2450,7 @@ class Async {
 		 * @since 1.0.0
 		 *
 		 * @param int         $quantity  Product quantity
-		 * @param  WC_Product $product   Product data
+		 * @param  \WC_Product $product   Product data
 		 */
 		return (int) apply_filters( 'se_get_product_quanity', $quantity, $product );
 	}
@@ -3075,14 +3075,15 @@ class Async {
 		return $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT
-					post_title AS label,
-					post_excerpt AS name
-				FROM $wpdb->posts
-				WHERE post_excerpt IN (SELECT
-					DISTINCT pm.meta_key
-				FROM $wpdb->postmeta pm
-				LEFT JOIN $wpdb->posts AS p ON pm.post_id = p.ID
-				WHERE p.post_type = %s AND pm.meta_key NOT LIKE %s)",
+					    post_title AS label,
+					    post_excerpt AS name
+					FROM $wpdb->posts p
+					INNER JOIN
+					    ( SELECT
+					    DISTINCT pm.meta_key
+					FROM $wpdb->postmeta pm
+					LEFT JOIN $wpdb->posts AS p ON pm.post_id = p.ID
+						WHERE p.post_type = %s AND pm.meta_key NOT LIKE %s) pk ON p.post_excerpt = pk.meta_key",
 				'product',
 				'\_%'
 			)

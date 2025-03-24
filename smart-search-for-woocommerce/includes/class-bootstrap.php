@@ -40,12 +40,16 @@ class Bootstrap {
 			return;
 		}
 
-		if ( SE_DEBUG || isset( $_REQUEST[ Async::FL_DISPLAY_ERRORS ] ) && Async::FL_DISPLAY_ERRORS_KEY == $_REQUEST[ Async::FL_DISPLAY_ERRORS ] ) {
+		if (
+			SE_DEBUG ||
+			( isset( $_REQUEST[ Async::FL_DISPLAY_ERRORS ] ) && Async::FL_DISPLAY_ERRORS_KEY == $_REQUEST[ Async::FL_DISPLAY_ERRORS ] )
+		) {
 			fn_se_define( 'WP_DEBUG', true );
 			fn_se_define( 'WP_DEBUG_DISPLAY', true );
 		}
 
 		add_action( 'plugins_loaded', array( __CLASS__, 'plugin_loaded' ) );
+		add_action( 'plugins_loaded', array( __CLASS__, 'load_extensions' ), 15 );
 		add_action( 'wp_dashboard_setup', array( Admin_Dashboard::class, 'init' ) );
 
 		// Init Searchanise Async.
@@ -82,22 +86,19 @@ class Bootstrap {
 			$GLOBALS['SearchaniseCli'] = new Cli_Commands();
 
 		} elseif ( ! is_admin() && ! defined( 'DOING_AJAX' ) && ! defined( 'DOING_CRON' ) ) {
-			if ( ! Api::get_instance()->get_wc_status() ) {
-				return false;
-			}
-
 			// Init Searchanise SmartNavigaion.
 			$GLOBALS['SearchaniseNavigation'] = new Navigation( Api::get_instance()->get_locale() );
 			// Init Searchanise Recommendations.
 			$GLOBALS['SearchaniseRecommendations'] = new Recommendations( Api::get_instance()->get_locale() );
-			// Init fulltext search.
-			$GLOBALS['SearchaniseSearch'] = new Fulltext_Search();
 			// Init widgets.
 			add_action(
 				'plugins_loaded',
 				function () {
 					$currently_language = Api::get_instance()->get_currently_language();
+					// Init Searchresults widget.
 					$GLOBALS['searchanise'] = new Search_Results( $currently_language );
+					// Init fulltext search.
+					$GLOBALS['SearchaniseSearch'] = new Fulltext_Search( $currently_language );
 				},
 				Api::POSTPONED_LOAD_PRIORITY
 			);
@@ -115,14 +116,8 @@ class Bootstrap {
 	 * @return void
 	 */
 	public static function load_extensions() {
-		add_action(
-			'plugins_loaded',
-			function () {
-				$GLOBALS['WoocommerceSearchaniseWeglot'] = new WcWeglot();
-				$GLOBALS['WoocommerceSearchaniseJetpack'] = new WcSeJetpack();
-			},
-			5
-		);
+		$GLOBALS['WoocommerceSearchaniseWeglot'] = new WcWeglot();
+		$GLOBALS['WoocommerceSearchaniseJetpack'] = new WcSeJetpack();
 
 		register_uninstall_hook( WP_PLUGIN_DIR . DIRECTORY_SEPARATOR . 'weglot/weglot.php', array( WcWeglot::class, 'uninstallAddon' ) );
 	}

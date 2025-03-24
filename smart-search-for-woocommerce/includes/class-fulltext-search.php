@@ -118,9 +118,11 @@ class Fulltext_Search extends Abstract_Extension {
 
 	/**
 	 * Search constructor
+	 *
+	 * @param string $lang_code Lang code.
 	 */
-	public function __construct() {
-		$this->lang_code = Api::get_instance()->get_currently_language();
+	public function __construct( $lang_code = null ) {
+		$this->lang_code = $lang_code ? $lang_code : Api::get_instance()->get_currently_language();
 		parent::__construct();
 	}
 
@@ -760,6 +762,7 @@ class Fulltext_Search extends Abstract_Extension {
 
 		$params = array();
 
+		$params['q'] = '';
 		$params['restrictBy']['status'] = 'publish';
 		$params['restrictBy']['visibility'] = 'visible|catalog|search';
 		if ( 'yes' === get_option( 'woocommerce_hide_out_of_stock_items' ) ) {
@@ -768,8 +771,9 @@ class Fulltext_Search extends Abstract_Extension {
 
 		if ( self::TYPE_TEXT_FIND == $type ) {
 			// Text search.
-			$params['q'] = '';
-			if ( ! empty( $query_vars['s'] ) ) {
+			if ( ! empty( $query['s'] ) ) {
+				$params['q'] = strtolower( trim( $query['s'] ) );
+			} elseif ( ! empty( $query_vars['s'] ) ) {
 				$params['q'] = strtolower( trim( $query_vars['s'] ) );
 			}
 
@@ -780,7 +784,6 @@ class Fulltext_Search extends Abstract_Extension {
 
 		} else {
 			// Advanced text search.
-			$params['q'] = '';
 			// TODO: Remove $_REQUEST from here.
 			if ( ! empty( $_REQUEST['s'] ) ) {
 				$params['q'] = strtolower( trim( sanitize_key( $_REQUEST['s'] ) ) );

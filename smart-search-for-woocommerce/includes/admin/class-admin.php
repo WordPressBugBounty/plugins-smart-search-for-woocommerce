@@ -50,29 +50,6 @@ class Admin {
 			return;
 		}
 
-		if ( isset( $_GET['page'] ) ) {
-			$current_page = sanitize_text_field( wp_unslash( $_GET['page'] ) );
-
-			if ( 'searchanise' === $current_page && is_plugin_active( 'woocommerce/woocommerce.php' ) && ! Api::get_instance()->get_wc_status() ) {
-				$woo_subscriptions_url = get_admin_url() . 'admin.php?page=wc-addons&section=helper';
-
-				add_action(
-					'admin_notices',
-					function () use ( $woo_subscriptions_url ) {
-						echo '<div class="notice-error notice"><p>'
-							. '<b>' . esc_html( SE_PRODUCT_NAME ) . '</b></p><p>'
-							. wp_kses_data(
-								sprintf(
-								/* translators: %s is a placeholder for the subscriptions URL */
-									__( 'The Searchanise app is not working now because your subscription is not active. Please <a href=" %s">upgrade your subscription</a> to continue enjoying Searchanise in full.', 'woocommerce-searchanise' ),
-									$woo_subscriptions_url
-								)
-							) . '</p></div>';
-					}
-				);
-			}
-		}
-
 		if ( ! is_plugin_active( 'woocommerce/woocommerce.php' ) && ! is_plugin_active_for_network( 'woocommerce/woocommerce.php' ) ) {
 			add_action(
 				'admin_notices',
@@ -97,6 +74,21 @@ class Admin {
 
 				if ( isset( $_GET['activate'] ) ) {
 					unset( $_GET['activate'] );
+				}
+			}
+		}
+
+		if ( $this->count_bubble_notices() ) {
+			global $submenu;
+			$plugin_titles = array( 'Searchanise', 'Smart Search and Product Filter' );
+			$count         = $this->count_bubble_notices();
+
+			if ( isset( $submenu['woocommerce'] ) ) {
+				foreach ( $submenu['woocommerce'] as &$menu_item ) {
+					if ( is_array( $menu_item ) && in_array( $menu_item[0], $plugin_titles, true ) ) {
+						$menu_item[0] .= " <span class='awaiting-mod count-" . esc_attr( $count ) . "'><span class='pending-count'>" . absint( $count ) . '</span></span>';
+						break;
+					}
 				}
 			}
 		}
@@ -202,6 +194,7 @@ class Admin {
 		add_filter( 'admin_footer_text', array( $this, 'admin_footer_text' ), 999999 );
 		add_filter( 'plugin_action_links_' . SE_PLUGIN_BASENAME, array( $this, 'admin_settings_link' ) );
 		add_action( 'admin_notices', array( $this, 'display_admin_notices' ) );
+		add_action( 'admin_notices', array( $this, 'display_wp_dashboard_notices' ) );
 	}
 
 	/**
@@ -576,5 +569,80 @@ class Admin {
 		 * @param string $lang_code
 		 */
 		return (array) apply_filters( 'se_get_all_categories', $categories, $lang_code );
+	}
+
+	/**
+	 * Displays notice on dashboard
+	 *
+	 * @return void
+	 */
+	public function display_wp_dashboard_notices() {
+
+		$store_data     = Api::get_instance()->get_woocommerce_state_data();
+		$se_admin_panel = get_admin_url( null, '/admin.php?page=searchanise' );
+
+		if ( false === $store_data ) {
+			return;
+		}
+
+		if ( is_admin() ) {
+			$screen = get_current_screen();
+
+			$allowed_tags = array(
+				'div' => array(
+					'class' => array(),
+				),
+				'p'   => array(),
+				'a'   => array(
+					'href' => array(),
+				),
+			);
+
+			if ( 'dashboard' === $screen->id ) {
+				if ( isset( $store_data['subscription_expired'] ) && 'Y' === $store_data['subscription_expired'] ) {
+					echo wp_kses(
+						'<div class=\"notice notice-warning is-dismissible\">
+						<p>Your payment for Searchanise failed for some reason. <a href="' . esc_url( $se_admin_panel ) . '">Please reactivate your Searchanise</a> subscription.</p></div>',
+						$allowed_tags
+					);
+				}
+				if ( isset( $store_data['indexing_error'] ) && 'Y' === $store_data['indexing_error'] ) {
+					echo wp_kses(
+						'<div class=\"notice notice-warning is-dismissible\">
+						<p>It looks like the sync with the search engine failed. Please address Searchanise support <a href=\'mailto:feedback@searchanise.io\'>feedback@searchanise.io</a> to solve the issue.</p></div>',
+						$allowed_tags
+					);
+				}
+				if ( isset( $store_data['trail_over'] ) && 'Y' === $store_data['trail_over'] ) {
+					echo wp_kses(
+						'<div class=\"notice notice-warning is-dismissible\">
+						<p>Your Searchanise trial has ended. <a href="' . esc_url( $se_admin_panel ) . '"> Please select a plan</a> to continue using the app.</p></div>',
+						$allowed_tags
+					);
+				}
+				if ( isset( $store_data['products_over_limit'] ) && 'Y' === $store_data['products_over_limit'] ) {
+					echo wp_kses(
+						'<div class=\"notice notice-warning is-dismissible\">
+						<p>The product limit of your store has been exceeded. <a href="' . esc_url( $se_admin_panel ) . '"> Please upgrade your Searchanise plan</a>.</p></div>',
+						$allowed_tags
+					);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Count the number of bubble notices
+	 *
+	 * @return int|mixed
+	 */
+	public function count_bubble_notices() {
+		$store_data = Api::get_instance()->get_woocommerce_state_data();
+
+		if ( is_array( $store_data ) ) {
+			$value_counts = array_count_values( $store_data );
+		}
+
+		return isset( $value_counts['Y'] ) ? $value_counts['Y'] : 0;
 	}
 }

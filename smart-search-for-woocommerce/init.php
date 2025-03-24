@@ -26,12 +26,12 @@ function fn_se_define_constants() {
 	fn_se_define( 'SE_PAGES_PER_PASS', 100 );
 
 	fn_se_define( 'SE_VERSION', '1.3' );
-	fn_se_define( 'SE_PLUGIN_VERSION', '1.0.16' );
+	fn_se_define( 'SE_PLUGIN_VERSION', '1.0.17' );
 	fn_se_define( 'SE_MEMORY_LIMIT', '512M' );
 	fn_se_define( 'SE_MAX_ERROR_COUNT', 3 );
 	fn_se_define( 'SE_MAX_PROCESSING_TIME', 720 );
 	fn_se_define( 'SE_MAX_SEARCH_REQUEST_LENGTH', 8000 );
-	fn_se_define( 'SE_SERVICE_URL', 'http://searchserverapi.com' );
+	fn_se_define( 'SE_SERVICE_URL', 'http://searchserverapi1.com' );
 	fn_se_define( 'SE_PLATFORM', 'woocommerce' );
 	fn_se_define( 'SE_SUPPORT_EMAIL', 'feedback@searchanise.com' );
 

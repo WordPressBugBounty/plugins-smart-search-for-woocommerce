@@ -60,6 +60,10 @@ class Api {
 	const LOAD_PRIORITY           = 10;
 	const POSTPONED_LOAD_PRIORITY = 99;
 
+	// Transient labels.
+	const LABEL_FOR_TRANSIENT    = 'se_transient_options_';
+	const LABEL_STATE_DATA_TRANSIENT  = 'se_transient_state_data';
+
 	/**
 	 * Current instance
 	 *
@@ -392,6 +396,9 @@ class Api {
 				'value'     => $value,
 			)
 		);
+
+		$transient_name  = self::LABEL_FOR_TRANSIENT . $name . $lang_code;
+		set_transient( $transient_name, $value, 24 * HOUR_IN_SECONDS );
 	}
 
 	/**
@@ -403,16 +410,26 @@ class Api {
 	public function get_setting( $name, $lang_code = '' ) {
 		global $wpdb;
 
-		return $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT
-				value
-			FROM {$wpdb->prefix}wc_se_settings
-			WHERE name = %s AND lang_code = %s",
-				$name,
-				$this->get_locale_settings( $lang_code )
-			)
-		);
+		$transient_name  = self::LABEL_FOR_TRANSIENT . $name . $lang_code;
+		$transient_value = get_transient( $transient_name );
+
+		if ( false === $transient_value ) {
+			$setting_value = $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT value
+                FROM {$wpdb->prefix}wc_se_settings
+                WHERE name = %s AND lang_code = %s",
+					$name,
+					$this->get_locale_settings( $lang_code )
+				)
+			);
+
+			set_transient( $transient_name, $setting_value, 24 * HOUR_IN_SECONDS );
+
+			return $setting_value;
+		}
+
+		return $transient_value;
 	}
 
 	/**
@@ -1178,14 +1195,15 @@ class Api {
 	 * Check and test enviroments
 	 *
 	 * @param boolean $display_errors Display flag.
+	 * @return array
 	 */
 	public function check_enviroments( $display_errors = true ) {
 		if (
-			defined( 'DOING_AJAX' ) && DOING_AJAX
-			|| defined( 'DOING_CRON' ) && DOING_CRON
-			|| ! is_admin()
+			( defined( 'DOING_AJAX' ) && DOING_AJAX ) ||
+			( defined( 'DOING_CRON' ) && DOING_CRON ) ||
+			! is_admin()
 		) {
-			return;
+			return array();
 		}
 
 		$errors = array();
@@ -2041,38 +2059,47 @@ class Api {
 	}
 
 	/**
-	 * Get the status in WooCommerce plugin.
+	 * Get state data of the engine.
 	 *
-	 * @return int|null The status of the WooCommerce plugin, or null if class WC_Helper doesn't exist.
+	 * @return bool|string Y/N Returns the state status
 	 */
-	public function get_wc_status() {
+	public function get_woocommerce_state_data() {
 
-		$plugin_version = $this->get_woocommerce_plugin_version();
+		$transient_name  = self::LABEL_STATE_DATA_TRANSIENT;
+		$state_data_transient_value = get_transient( $transient_name );
 
-		if ( empty( $plugin_version ) ) {
-			return true;
+		if ( false !== $state_data_transient_value ) {
+			return $state_data_transient_value;
 		}
 
-		if ( class_exists( '\WC_Helper_Options', false ) ) {
-			$auth = \WC_Helper_Options::get( 'auth' );
-			if ( empty( $auth ) ) {
-				return true;
+		$result = false;
+		$parent_private_key = $this->get_parent_private_key();
+
+		if ( ! empty( $parent_private_key ) ) {
+			try {
+				$result = self::get_instance()->send_request(
+					'/api/state/get/json',
+					$parent_private_key,
+					array(
+						'woocommerce_store_data' => '',
+					),
+					true
+				);
+			} catch ( Searchanise_Exception $e ) {
+				$error = $e->getMessage();
+				Logger::get_instance()->error(
+					array(
+						'error' => $error,
+					)
+				);
 			}
 		}
 
-		if ( class_exists( '\WC_Helper' ) ) {
-			$subscriptions = \WC_Helper::get_subscriptions();
+		$variables = isset( $result['variable'] ) ? $result['variable'] : array();
+		if ( ! empty( $variables['woocommerce_store_data'] ) ) {
 
-			$status = false;
-
-			foreach ( $subscriptions as $element ) {
-				if ( 'smart-search-and-product-filter' === $element['zip_slug'] ) {
-					$status = $element['sites_active'];
-					break;
-				}
-			}
-
-			return $status;
+			set_transient( $transient_name, $variables['woocommerce_store_data'], 15 );
+			return $variables['woocommerce_store_data'];
 		}
 
 		return false;

@@ -11,6 +11,7 @@ defined( 'SE_ABSPATH' ) || exit;
 
 use Searchanise\SmartWoocommerceSearch\Abstract_Extension;
 use Searchanise\SmartWoocommerceSearch\Api;
+use Searchanise\SmartWoocommerceSearch\Async;
 use Searchanise\SmartWoocommerceSearch\Queue;
 
 /**
@@ -513,9 +514,7 @@ class WcWeglot extends Abstract_Extension {
 			'summary',
 			'categories',
 			'tags',
-			'category_ids',
 			'stock_status',
-			'price',
 		);
 
 		$attributes = wc_get_attribute_taxonomies();
@@ -524,7 +523,7 @@ class WcWeglot extends Abstract_Extension {
 			$wooc_attr = array();
 
 			foreach ( $attributes as $atr ) {
-				$wooc_attr[] = $atr->attribute_name;
+				$wooc_attr[] = Async::get_taxonomy_id( $atr->attribute_name );
 			}
 
 			$extra_keys = array_merge( $extra_keys, $wooc_attr );

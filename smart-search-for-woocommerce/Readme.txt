@@ -4,10 +4,10 @@ Contributors: searchanise
 Donate link: https://searchanise.io/woo-commerce/
 Tags: search, woocommerce search, product search, product filter, smart search, woocommerce filter, search results, search engine, live search, search plugin, advanced search, site search
 Requires at least: 4.0
-Tested up to: 6.4.2
+Tested up to: 6.7.2
 WC requires at least: 3.0.0
-WC tested up to: 8.4.0
-Stable tag: 1.0.15
+WC tested up to: 9.7.1
+Stable tag: 1.0.17
 Requires PHP: 5.6
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -172,6 +172,16 @@ Searchanise replaces the built-in search and processes all search queries remote
 5. Leverage analytics to avoid giving no results to your customers.
 
 == Changelog ==
+
+= 1.0.17 =
+
+* [~] - Change Woocommerce subscription link in admin area.
+* [!] - Custom filter values aren't translated by Weglot. Fixed.
+* [!] - Sometimes products indexation fails because of memory limit. Fixed.
+* [!] - Weglot language sometimes detects incorrectly. Fixed.
+* [!] - Module doesn't work if subscription status is not available. Fixed.
+* [!] - Module doesn't work in some Mozilla Firefox browser versions. Fixed.
+* [!] - Search query includes some specific special symbols not working correctly on fulltext search. Fixed.
 
 = 1.0.16 =
 

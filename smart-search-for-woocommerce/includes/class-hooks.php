@@ -13,6 +13,7 @@ defined( 'ABSPATH' ) || exit;
  * Searchanise hooks class
  */
 class Hooks extends Abstract_Extension {
+	const MAX_PRODUCTS_TO_UPDATE = 10000;
 
 	const HOOKS = array(
 		'woocommerce_process_product_meta',
@@ -576,7 +577,16 @@ class Hooks extends Abstract_Extension {
 		$product_ids = $this->getProductIdsByTaxonomy( wc_attribute_taxonomy_name( $data['attribute_name'] ) );
 
 		if ( ! empty( $product_ids ) ) {
-			$this->addProductToQueue( $product_ids );
+			if ( count( $product_ids ) > self::MAX_PRODUCTS_TO_UPDATE ) {
+				Api::get_instance()->queue_import();
+				return;
+			}
+
+			$chunk = array_chunk( $product_ids, 100 );
+
+			foreach ( $chunk as $chunk_ids ) {
+				$this->addProductToQueue( $chunk_ids );
+			}
 		}
 
 		Queue::get_instance()->add_action_update_attributes();
@@ -642,7 +652,16 @@ class Hooks extends Abstract_Extension {
 			$product_ids = $this->getProductIdsByTaxonomy( $taxonomy );
 
 			if ( ! empty( $product_ids ) ) {
-				$this->addProductToQueue( $product_ids );
+				if ( count( $product_ids ) > self::MAX_PRODUCTS_TO_UPDATE ) {
+					Api::get_instance()->queue_import();
+					return;
+				}
+
+				$chunk = array_chunk( $product_ids, 100 );
+
+				foreach ( $chunk as $chunk_ids ) {
+					$this->addProductToQueue( $chunk_ids );
+				}
 			}
 		}
 	}
@@ -673,7 +692,16 @@ class Hooks extends Abstract_Extension {
 				$product_ids = $this->getProductIdsByTaxonomy( $taxonomy );
 
 				if ( ! empty( $product_ids ) ) {
-					$this->addProductToQueue( $product_ids );
+					if ( count( $product_ids ) > self::MAX_PRODUCTS_TO_UPDATE ) {
+						Api::get_instance()->queue_import();
+						return;
+					}
+
+					$chunk = array_chunk( $product_ids, 100 );
+
+					foreach ( $chunk as $chunk_ids ) {
+						$this->addProductToQueue( $chunk_ids );
+					}
 				}
 			}
 		}
@@ -916,7 +944,16 @@ class Hooks extends Abstract_Extension {
 					$product_ids = $this->getProductIdsByTaxonomy( $val['name'] );
 
 					if ( ! empty( $product_ids ) ) {
-						$this->addProductToQueue( $product_ids );
+						if ( count( $product_ids ) > self::MAX_PRODUCTS_TO_UPDATE ) {
+							Api::get_instance()->queue_import();
+							return;
+						}
+
+						$chunk = array_chunk( $product_ids, 100 );
+
+						foreach ( $chunk as $chunk_ids ) {
+							$this->addProductToQueue( $chunk_ids );
+						}
 					}
 				}
 

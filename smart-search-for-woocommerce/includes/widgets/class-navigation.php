@@ -38,7 +38,10 @@ class Navigation {
 	 * Class init
 	 */
 	public function init() {
-		if ( defined( 'DOING_AJAX' ) && DOING_AJAX || defined( 'DOING_CRON' ) && DOING_CRON ) {
+		if (
+			defined( 'DOING_AJAX' ) &&
+			( DOING_AJAX || ( defined( 'DOING_CRON' ) && DOING_CRON ) )
+		) {
 			return;
 		}
 
@@ -57,11 +60,11 @@ class Navigation {
 				<<<SCRIPT
             (function(window, undefined) {
                 var sXpos = 0, sIndex = 0, sTotalFrames = 12, sInterval = null;
-        
+
                 if (document.getElementById('snize_results').innerHTML != '') {
                     return;
                 }
-        
+
                 document.getElementById('snize_results').innerHTML = '<div id="snize-preload-spinner"></div>';
                 sInterval = setInterval(function()
                 {
@@ -71,10 +74,10 @@ class Navigation {
                     } else {
                         clearInterval(sInterval);
                     }
-        
+
                     sXpos  += 32;
                     sIndex += 1;
-        
+
                     if (sIndex >= 12) {
                         sXpos  = 0;
                         sIndex = 0;

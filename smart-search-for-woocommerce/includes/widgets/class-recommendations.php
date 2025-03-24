@@ -52,7 +52,10 @@ class Recommendations {
 	 * Init
 	 */
 	public function init() {
-		if ( defined( 'DOING_AJAX' ) && DOING_AJAX || defined( 'DOING_CRON' ) && DOING_CRON ) {
+		if (
+			defined( 'DOING_AJAX' ) &&
+			( DOING_AJAX || ( defined( 'DOING_CRON' ) && DOING_CRON ) )
+		) {
 			return;
 		}
 

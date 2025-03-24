@@ -139,8 +139,8 @@ class Logger {
 	 */
 	private function log( $data, $type ) {
 		if (
-			! $this->is_log_errors_enabled() && self::TYPE_ERROR == $type
-			|| ! $this->is_log_debug_enabled() && self::TYPE_DEBUG == $type
+			( ! $this->is_log_errors_enabled() && self::TYPE_ERROR == $type )
+			|| ( ! $this->is_log_debug_enabled() && self::TYPE_DEBUG == $type )
 		) {
 			return;
 		}
