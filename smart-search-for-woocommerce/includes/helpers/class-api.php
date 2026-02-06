@@ -15,23 +15,23 @@ defined( 'ABSPATH' ) || exit;
 class Api {
 
 	// Export statuses.
-	const EXPORT_STATUS_NONE          = 'none';
-	const EXPORT_STATUS_QUEUED        = 'queued';
-	const EXPORT_STATUS_START         = 'start';
-	const EXPORT_STATUS_PROCESSING    = 'processing';
-	const EXPORT_STATUS_SENT          = 'sent';
-	const EXPORT_STATUS_DONE          = 'done';
-	const EXPORT_STATUS_SYNC_ERROR    = 'sync_error';
+	const EXPORT_STATUS_NONE       = 'none';
+	const EXPORT_STATUS_QUEUED     = 'queued';
+	const EXPORT_STATUS_START      = 'start';
+	const EXPORT_STATUS_PROCESSING = 'processing';
+	const EXPORT_STATUS_SENT       = 'sent';
+	const EXPORT_STATUS_DONE       = 'done';
+	const EXPORT_STATUS_SYNC_ERROR = 'sync_error';
 
 	// Addon statuses.
-	const ADDON_STATUS_ENABLED        = 'enabled';
-	const ADDON_STATUS_DISABLED       = 'disabled';
-	const ADDON_STATUS_DELETED        = 'deleted';
+	const ADDON_STATUS_ENABLED  = 'enabled';
+	const ADDON_STATUS_DISABLED = 'disabled';
+	const ADDON_STATUS_DELETED  = 'deleted';
 
 	// Sync Modes.
-	const SYNC_MODE_REALTIME          = 'realtime';
-	const SYNC_MODE_PERIODIC          = 'periodic';
-	const SYNC_MODE_MANUAL            = 'manual';
+	const SYNC_MODE_REALTIME = 'realtime';
+	const SYNC_MODE_PERIODIC = 'periodic';
+	const SYNC_MODE_MANUAL   = 'manual';
 
 	// Default values.
 	const DEFAULT_SEARCH_FIELD_ID     = '#search,form input[name="s"]';
@@ -48,10 +48,10 @@ class Api {
 	const MIN_WORDPRESS_VERSION               = '4.0.0';
 	const MIN_WORDPRESS_VERSION_FOR_WP_JQUERY = '5.6';
 
-	const OPTION_PREFIX = 'se_';
-	const LABEL_FOR_PRICES_USERGROUP        = 'se_price_';
-	const LABEL_FOR_LIST_PRICES_USERGROUP   = 'se_list_price_';
-	const LABEL_FOR_MAX_PRICES_USERGROUP    = 'se_max_price_';
+	const OPTION_PREFIX                   = 'se_';
+	const LABEL_FOR_PRICES_USERGROUP      = 'se_price_';
+	const LABEL_FOR_LIST_PRICES_USERGROUP = 'se_list_price_';
+	const LABEL_FOR_MAX_PRICES_USERGROUP  = 'se_max_price_';
 
 	const USERGROUP_GUEST = 'guest';
 
@@ -61,8 +61,8 @@ class Api {
 	const POSTPONED_LOAD_PRIORITY = 99;
 
 	// Transient labels.
-	const LABEL_FOR_TRANSIENT    = 'se_transient_options_';
-	const LABEL_STATE_DATA_TRANSIENT  = 'se_transient_state_data';
+	const LABEL_FOR_TRANSIENT        = 'se_transient_options_';
+	const LABEL_STATE_DATA_TRANSIENT = 'se_transient_state_data';
 
 	/**
 	 * Current instance
@@ -102,6 +102,17 @@ class Api {
 		$data = get_file_data( SE_ABSPATH . DIRECTORY_SEPARATOR . 'woocommerce-searchanise.php', array( 'Woo' ), 'plugin' );
 
 		return $data[0];
+	}
+
+	/**
+	 * Returns product name
+	 *
+	 * @return string
+	 */
+	public function get_product_name() {
+		$data = get_plugin_data( SE_ABSPATH . DIRECTORY_SEPARATOR . 'woocommerce-searchanise.php' );
+
+		return $data['Name'];
 	}
 
 	/**
@@ -173,7 +184,7 @@ class Api {
 			);
 
 			foreach ( $keys as $k ) {
-				$k['lang_code'] = $this->get_locale( $k['lang_code'] );
+				$k['lang_code']                  = $this->get_locale( $k['lang_code'] );
 				$private_keys[ $k['lang_code'] ] = $k['value'];
 			}
 		}
@@ -239,7 +250,7 @@ class Api {
 			);
 
 			foreach ( $keys as $k ) {
-				$k['lang_code'] = $this->get_locale( $k['lang_code'] );
+				$k['lang_code']              = $this->get_locale( $k['lang_code'] );
 				$api_keys[ $k['lang_code'] ] = $k['value'];
 			}
 		}
@@ -294,7 +305,7 @@ class Api {
 			);
 
 			foreach ( $keys as $k ) {
-				$k['lang_code'] = $this->get_locale( $k['lang_code'] );
+				$k['lang_code']              = $this->get_locale( $k['lang_code'] );
 				$statuses[ $k['lang_code'] ] = $k['value'];
 			}
 		}
@@ -344,7 +355,7 @@ class Api {
 						'/api/state/get/json',
 						$engine_data['private_key'],
 						array(
-							'status' => '',
+							'status'      => '',
 							'full_import' => '',
 						),
 						true
@@ -397,7 +408,7 @@ class Api {
 			)
 		);
 
-		$transient_name  = self::LABEL_FOR_TRANSIENT . $name . $lang_code;
+		$transient_name = self::LABEL_FOR_TRANSIENT . $name . $lang_code;
 		set_transient( $transient_name, $value, 24 * HOUR_IN_SECONDS );
 	}
 
@@ -909,7 +920,7 @@ class Api {
 	 * @return array
 	 */
 	public function get_custom_attributes() {
-		$attributes = $this->get_system_setting( 'custom_attribute' );
+		$attributes        = $this->get_system_setting( 'custom_attribute' );
 		$custom_taxonomies = $this->get_system_setting( 'custom_taxonomies' );
 
 		$attributes = is_array( $attributes ) ? $attributes : array_map( 'trim', explode( ',', $attributes ) );
@@ -1058,7 +1069,7 @@ class Api {
 	 * @return array
 	 */
 	public function get_current_usergroup_ids() {
-		$current_user = wp_get_current_user();
+		$current_user      = wp_get_current_user();
 		$default_usergroup = array( self::USERGROUP_GUEST );
 
 		return array_merge( $default_usergroup, $current_user->roles );
@@ -1074,18 +1085,18 @@ class Api {
 
 		$ret = array();
 
-		$ret['parent_private_key']      = $this->get_parent_private_key();
-		$ret['private_key']             = $this->get_private_keys();
-		$ret['api_key']                 = $this->get_api_keys();
-		$ret['export_status']           = $this->get_export_statuses();
+		$ret['parent_private_key'] = $this->get_parent_private_key();
+		$ret['private_key']        = $this->get_private_keys();
+		$ret['api_key']            = $this->get_api_keys();
+		$ret['export_status']      = $this->get_export_statuses();
 
-		$ret['last_request']            = $this->get_last_requests();
-		$ret['last_resync']             = $this->get_last_resyncs();
+		$ret['last_request'] = $this->get_last_requests();
+		$ret['last_resync']  = $this->get_last_resyncs();
 
-		$ret['addon_status']            = $this->get_module_status() == 'Y' ? 'enabled' : 'disabled';
-		$ret['addon_version']           = $this->get_system_setting( 'version' );
+		$ret['addon_status']  = $this->get_module_status() == 'Y' ? 'enabled' : 'disabled';
+		$ret['addon_version'] = $this->get_system_setting( 'version' );
 
-		$ret['php_verison']             = PHP_VERSION;
+		$ret['php_verison'] = PHP_VERSION;
 
 		// Get WP version.
 		$ret['wordpress_version']       = $wp_version;
@@ -1135,7 +1146,7 @@ class Api {
 
 		if ( ! isset( $names[ $lang_code ] ) ) {
 			$available_translations = wp_get_available_translations();
-			$full_name = Locales::get_full_name_from_lang_code( $lang_code );
+			$full_name              = Locales::get_full_name_from_lang_code( $lang_code );
 
 			if ( ! empty( $full_name ) ) {
 				$names[ $lang_code ] = $full_name;
@@ -1315,7 +1326,7 @@ class Api {
 				$engines[ $lang_code ] = $engines_data[ $lang_code ];
 
 			} else {
-				$engines[ $lang_code ] = array(
+				$engines[ $lang_code ]      = array(
 					'lang_code'          => $lang_code,
 					'status'             => 'A',
 					'language_name'      => $this->get_store_name( $lang_code ),
@@ -1360,7 +1371,7 @@ class Api {
 					$this->add_admin_notitice( (string) $e, 'error' );
 				}
 			} else {
-				throw new Searchanise_Exception( implode( ',', array_map( 'wp_kses', $data['errors'] ) ) );
+				throw new Searchanise_Exception( implode( ',', array_map( 'wp_kses_data', $data['errors'] ) ) );
 			}
 
 			return false;
@@ -1390,7 +1401,7 @@ class Api {
 
 		if ( ! is_wp_error( $result ) ) {
 			$response = wp_remote_retrieve_body( $result );
-			$passed = 'OK' == $response;
+			$passed   = 'OK' == $response;
 		} else {
 			$passed = false;
 		}
@@ -1410,7 +1421,7 @@ class Api {
 	 */
 	public function send_request( $url, $private_key, $data = array(), $only_http = true ) {
 		$response = false;
-		$params = array( 'private_key' => $private_key ) + $data;
+		$params   = array( 'private_key' => $private_key ) + $data;
 
 		Logger::get_instance()->debug(
 			array_merge(
@@ -1500,7 +1511,7 @@ class Api {
 					'headers' => array(
 						'Content-Type' => 'application/x-www-form-urlencoded;charset=UTF-8',
 					),
-					'body' => array(
+					'body'    => array(
 						'private_key'  => $private_key,
 						'addon_status' => $status,
 					),
@@ -1534,7 +1545,7 @@ class Api {
 			$this->set_auto_install( true );
 		}
 
-		$connected = false;
+		$connected    = false;
 		$current_user = wp_get_current_user();
 
 		if ( ! empty( $current_user ) ) {
@@ -1561,7 +1572,7 @@ class Api {
 					continue;
 				}
 
-				if ( true == $show_notifications ) {
+				if ( $show_notifications ) {
 					$this->echo_progress( 'Connecting to Searchanise..' );
 				}
 
@@ -1572,13 +1583,13 @@ class Api {
 						'headers' => array(
 							'Content-Type' => 'application/x-www-form-urlencoded;charset=UTF-8',
 						),
-						'body' => array(
-							'url'                => $engine_data['url'],
-							'email'              => $email,
-							'language'           => $lang_code,
-							'parent_private_key' => $parent_private_key,
-							'version'            => SE_PLUGIN_VERSION,
-							'platform'           => SE_PLATFORM,
+						'body'    => array(
+							'url'                 => $engine_data['url'],
+							'email'               => $email,
+							'language'            => $lang_code,
+							'parent_private_key'  => $parent_private_key,
+							'version'             => SE_PLUGIN_VERSION,
+							'platform'            => SE_PLATFORM,
 							'woocommerce_version' => $this->get_woocommerce_plugin_version(),
 						),
 					)
@@ -1588,15 +1599,23 @@ class Api {
 					$response = wp_remote_retrieve_body( $request );
 				}
 
-				if ( true == $show_notifications ) {
+				if ( $show_notifications ) {
 					$this->echo_progress( '.' );
 				}
 
 				if ( ! empty( $response ) ) {
-					$response = $this->parse_response( $response, $show_notifications );
+					try {
+						$response = $this->parse_response( $response, is_admin() );
+					} catch ( Searchanise_Exception $e ) {
+						if ( $show_notifications ) {
+							$this->echo_progress( $e->getMessage() );
+						}
 
-					if ( ! empty( $response['keys']['api'] ) && ! empty( $response['keys']['private'] ) ) {
-						$api_key = (string) $response['keys']['api'];
+						return false;
+					}
+
+					if ( is_array( $response ) && ! empty( $response['keys']['api'] ) && ! empty( $response['keys']['private'] ) ) {
+						$api_key     = (string) $response['keys']['api'];
 						$private_key = (string) $response['keys']['private'];
 
 						if ( empty( $api_key ) || empty( $private_key ) ) {
@@ -1614,7 +1633,7 @@ class Api {
 						$connected = true;
 					}
 				} else {
-					if ( true == $show_notifications ) {
+					if ( $show_notifications ) {
 						$this->echo_progress( ' Error<br />' );
 					}
 
@@ -1629,7 +1648,7 @@ class Api {
 		}
 
 		if ( $connected ) {
-			if ( true == $show_notifications ) {
+			if ( $show_notifications ) {
 				$this->echo_progress( 'Done<br />' );
 				$this->add_admin_notitice( __( 'Congratulations, you\'ve just connected to Searchanise' ), 'success' );
 			}
@@ -1705,8 +1724,8 @@ class Api {
 	 * @param string $type    Message type.
 	 */
 	public function add_admin_notitice( $message, $type = 'notice' ) {
-		$admin_notices = $this->get_system_setting( 'admin_notices' );
-		$admin_notices = is_array( $admin_notices ) ? $admin_notices : array();
+		$admin_notices   = $this->get_system_setting( 'admin_notices' );
+		$admin_notices   = is_array( $admin_notices ) ? $admin_notices : array();
 		$admin_notices[] = compact( 'type', 'message' );
 		$this->set_system_setting( 'admin_notices', $admin_notices );
 	}
@@ -1757,7 +1776,7 @@ class Api {
 	 */
 	public function check_start_async( $lang_code = null ) {
 		$ret = false;
-		$q = Queue::get_instance()->get_next_queue( $lang_code );
+		$q   = Queue::get_instance()->get_next_queue( $lang_code );
 
 		if ( ! empty( $q ) ) {
 			if ( Queue::is_queue_running( $q ) ) {
@@ -1777,11 +1796,11 @@ class Api {
 		return $ret;
 	}
 
-	 /**
-	  * Returns currency rate
-	  *
-	  * @return float
-	  */
+	/**
+	 * Returns currency rate
+	 *
+	 * @return float
+	 */
 	public function get_currency_rate() {
 		$currency_rate = 1.0;
 
@@ -1913,18 +1932,18 @@ class Api {
 	public function send_addon_version() {
 		global $wp_version;
 
-		$result = false;
+		$result             = false;
 		$parent_private_key = $this->get_parent_private_key();
 
 		if ( ! empty( $parent_private_key ) ) {
 			$addon_options = $this->get_addon_options();
-			$result = $this->send_request(
+			$result        = $this->send_request(
 				'/api/state/update/json',
 				$parent_private_key,
 				array(
-					'addon_version'    => $addon_options['addon_version'],
-					'platform_edition' => ! empty( $addon_options['woocommerce'] ) ? $addon_options['woocommerce']['Version'] : '',
-					'platform_version' => $wp_version,
+					'addon_version'       => $addon_options['addon_version'],
+					'platform_edition'    => ! empty( $addon_options['woocommerce'] ) ? $addon_options['woocommerce']['Version'] : '',
+					'platform_version'    => $wp_version,
 					'woocommerce_version' => $this->get_woocommerce_plugin_version(),
 				),
 				true
@@ -1940,9 +1959,9 @@ class Api {
 	 * @return bool
 	 */
 	public function send_store_timezone() {
-		$result = false;
+		$result             = false;
 		$parent_private_key = $this->get_parent_private_key();
-		$timezone = wp_timezone_string();
+		$timezone           = wp_timezone_string();
 
 		if ( ! empty( $parent_private_key ) && ! empty( $timezone ) ) {
 			$result = $this->send_request(
@@ -2065,14 +2084,14 @@ class Api {
 	 */
 	public function get_woocommerce_state_data() {
 
-		$transient_name  = self::LABEL_STATE_DATA_TRANSIENT;
+		$transient_name             = self::LABEL_STATE_DATA_TRANSIENT;
 		$state_data_transient_value = get_transient( $transient_name );
 
 		if ( false !== $state_data_transient_value ) {
 			return $state_data_transient_value;
 		}
 
-		$result = false;
+		$result             = false;
 		$parent_private_key = $this->get_parent_private_key();
 
 		if ( ! empty( $parent_private_key ) ) {

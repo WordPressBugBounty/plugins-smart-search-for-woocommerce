@@ -154,7 +154,7 @@ SE_SPINNER
 	public function pre_handle404( $preempt, $wp_query ) {
 		$page_num = (int) filter_input( INPUT_GET, 'page' );
 
-		// Wordpress doesn't support the <!--nextpage--> pagination for posts and generates 404 error.
+		// WordPress doesn't support the <!--nextpage--> pagination for posts and generates 404 error.
 		// So, we have to skip this error for search results page.
 		return $this->is_search_results_page && $page_num > 0 ? true : $preempt;
 	}
@@ -205,7 +205,7 @@ SE_SPINNER
 	 * Add to cart ajax controller
 	 */
 	public static function ajax_add_to_cart() {
-		$response = array();
+		$response   = array();
 		$product_id = isset( $_REQUEST['product_id'] )
 			? (int) $_REQUEST['product_id']
 			: '';
@@ -221,7 +221,7 @@ SE_SPINNER
 			$product_id = apply_filters( 'woocommerce_add_to_cart_product_id', (int) $product_id );
 		}
 
-		$quantity = ! isset( $_REQUEST['quantity'] )
+		$quantity     = ! isset( $_REQUEST['quantity'] )
 			? 1
 			: wc_stock_amount( (int) $_REQUEST['quantity'] );
 		$variation_id = 0;
@@ -252,7 +252,7 @@ SE_SPINNER
 				 * @param integer $quantity          Quantity added to the cart.
 				 */
 				$passed_validation = apply_filters( 'woocommerce_add_to_cart_validation', true, $product_id, $quantity );
-				$product_status = get_post_status( $product_id );
+				$product_status    = get_post_status( $product_id );
 
 				if ( $passed_validation && 'publish' == $product_status && WC()->cart->add_to_cart( $product_id, $quantity, $variation_id ) ) {
 					/**
@@ -398,51 +398,51 @@ SE_SPINNER
 	 * Loads search widget assets
 	 */
 	public function load_search_widget() {
-		$se_searchanise_url = $this->get_search_result_page_url();
+		$se_searchanise_url   = $this->get_search_result_page_url();
 		$se_widgets_file_path = SE_BASE_DIR . '/assets/js/se-widgets.js';
 
 		$se_options = array(
-			'version'                       => SE_VERSION,
-			'host'                          => is_ssl() ? str_replace( 'http://', 'https://', SE_SERVICE_URL ) : SE_SERVICE_URL,
-			'api_key'                       => Api::get_instance()->get_api_key( $this->lang_code ),
+			'version'                      => SE_VERSION,
+			'host'                         => is_ssl() ? str_replace( 'http://', 'https://', SE_SERVICE_URL ) : SE_SERVICE_URL,
+			'api_key'                      => Api::get_instance()->get_api_key( $this->lang_code ),
 			/**
 			 * Searchanise decimals
 			 *
 			 * @since 1.0.0
 			 */
-			'decimals'                      => apply_filters( 'se_decimals', wc_get_price_decimals() ),
+			'decimals'                     => apply_filters( 'se_decimals', wc_get_price_decimals() ),
 			/**
 			 * Searchanise decimals separator
 			 *
 			 * @since 1.0.0
 			 */
-			'decimals_separator'            => apply_filters( 'se_decimals_separator', wc_get_price_decimal_separator() ),
+			'decimals_separator'           => apply_filters( 'se_decimals_separator', wc_get_price_decimal_separator() ),
 			/**
 			 * Searchanise thousands separator
 			 *
 			 * @since 1.0.0
 			 */
-			'thousands_separator'           => apply_filters( 'se_thousands_separator', wc_get_price_thousand_separator() ),
+			'thousands_separator'          => apply_filters( 'se_thousands_separator', wc_get_price_thousand_separator() ),
 			/**
 			 * Searchanise currency symbol
 			 *
 			 * @since 1.0.0
 			 */
-			'symbol'                        => apply_filters( 'se_currency_symbol', get_woocommerce_currency_symbol() ),
-			'rate'                          => Api::get_instance()->get_currency_rate(),
-			'currency_position_after'       => $this->get_currency_position_after(),
-			'search_input'                  => Api::get_instance()->get_search_input_selector(),
-			'results_form_path'             => $se_searchanise_url,
-			'results_fallback_url'          => $this->get_fallback_url(),
-			'results_add_to_cart_url'       => $this->get_add_to_cart_url(),
-			'hide_out_of_stock_products'    => 'yes' === get_option( 'woocommerce_hide_out_of_stock_items' ) ? 'Y' : 'N',
-			'cur_label_for_usergroup'       => Api::get_instance()->get_cur_label_for_prices_usergroup(),
-			'list_cur_label_for_usergroup'  => Api::get_instance()->get_cur_label_for_prices_usergroup( self::LIST_PRICE_TYPE ),
-			'max_cur_label_for_usergroup'   => Api::get_instance()->get_cur_label_for_prices_usergroup( self::MAX_PRICE_TYPE ),
-			'usergroup_ids'                 => implode( '|', Api::get_instance()->get_current_usergroup_ids() ),
-			'use_wp_jquery'                 => Api::get_instance()->is_use_wp_jquery(),
-			'recentlyViewedProducts'        => Api::get_instance()->get_recently_viewed_product_ids(),
-			'hideEmptyPrice'                => Api::get_instance()->get_hide_empty_price(),
+			'symbol'                       => apply_filters( 'se_currency_symbol', get_woocommerce_currency_symbol() ),
+			'rate'                         => Api::get_instance()->get_currency_rate(),
+			'currency_position_after'      => $this->get_currency_position_after(),
+			'search_input'                 => Api::get_instance()->get_search_input_selector(),
+			'results_form_path'            => $se_searchanise_url,
+			'results_fallback_url'         => $this->get_fallback_url(),
+			'results_add_to_cart_url'      => $this->get_add_to_cart_url(),
+			'hide_out_of_stock_products'   => 'yes' === get_option( 'woocommerce_hide_out_of_stock_items' ) ? 'Y' : 'N',
+			'cur_label_for_usergroup'      => Api::get_instance()->get_cur_label_for_prices_usergroup(),
+			'list_cur_label_for_usergroup' => Api::get_instance()->get_cur_label_for_prices_usergroup( self::LIST_PRICE_TYPE ),
+			'max_cur_label_for_usergroup'  => Api::get_instance()->get_cur_label_for_prices_usergroup( self::MAX_PRICE_TYPE ),
+			'usergroup_ids'                => implode( '|', Api::get_instance()->get_current_usergroup_ids() ),
+			'use_wp_jquery'                => Api::get_instance()->is_use_wp_jquery(),
+			'recentlyViewedProducts'       => Api::get_instance()->get_recently_viewed_product_ids(),
+			'hideEmptyPrice'               => Api::get_instance()->get_hide_empty_price(),
 		);
 
 		// Do not include search in admin toolbar.

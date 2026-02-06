@@ -70,7 +70,7 @@ class Hooks extends Abstract_Extension {
 	 *
 	 * @var array
 	 */
-	private $product_cat_ids  = null;
+	private $product_cat_ids = null;
 
 	/**
 	 * Updated tags
@@ -152,7 +152,7 @@ class Hooks extends Abstract_Extension {
 		if ( version_compare( $wp_version, Api::MIN_WORDPRESS_VERSION ) < 0 ) {
 			Api::get_instance()->add_admin_notitice(
 				/* translators: version */
-				sprintf( esc_html__( 'Plugin is compatible with Wordpress version %1$s or higher. Plugin may work incorrectly. Please upgrade your Wordpress to %2$s version or highter', 'woocommerce-searchanise' ), Api::MIN_WORDPRESS_VERSION, Api::MIN_WORDPRESS_VERSION ),
+				sprintf( esc_html__( 'Plugin is compatible with WordPress version %1$s or higher. Plugin may work incorrectly. Please upgrade your WordPress to %2$s version or highter', 'woocommerce-searchanise' ), Api::MIN_WORDPRESS_VERSION, Api::MIN_WORDPRESS_VERSION ),
 				'error'
 			);
 		}
@@ -187,12 +187,12 @@ class Hooks extends Abstract_Extension {
 	 * Products hooks
 	 ***********************************/
 
-	 /**
-	  * Save Product Meta Boxes.
-	  * TODO: Need refactored, since this hooks doesn't exist in new WC docs.
-	  *
-	  * @param int $product_id Product id.
-	  */
+	/**
+	 * Save Product Meta Boxes.
+	 * TODO: Need refactored, since this hooks doesn't exist in new WC docs.
+	 *
+	 * @param int $product_id Product id.
+	 */
 	public function processProductMeta( $product_id ) {
 		$this->addProductToQueue( $product_id );
 	}
@@ -277,15 +277,15 @@ class Hooks extends Abstract_Extension {
 	private function getProductParentIds( $product ) {
 		$parents = get_posts(
 			array(
-				'post_type'   => 'product',
-				'meta_query'  => array(
+				'post_type'  => 'product',
+				'meta_query' => array(
 					array(
 						'key'     => '_children',
 						'value'   => 'i:' . $product->get_id() . ';',
 						'compare' => 'LIKE',
 					),
 				),
-				'fields' => 'ids', // THIS LINE FILTERS THE SELECT SQL.
+				'fields'     => 'ids', // THIS LINE FILTERS THE SELECT SQL.
 			)
 		);
 
@@ -302,7 +302,7 @@ class Hooks extends Abstract_Extension {
 	 * @param int $page_id Page id.
 	 */
 	private function updatePage( $page_id ) {
-		$page = get_post( $page_id );
+		$page           = get_post( $page_id );
 		$excluded_pages = array_merge(
 			Async::get_instance()->get_excluded_pages(),
 			array(
@@ -321,7 +321,7 @@ class Hooks extends Abstract_Extension {
 	 * @param int $page_id Page id.
 	 */
 	private function deletePage( $page_id ) {
-		$page = get_post( $page_id );
+		$page           = get_post( $page_id );
 		$excluded_pages = array_merge(
 			Async::get_instance()->get_excluded_pages(),
 			array(
@@ -380,7 +380,7 @@ class Hooks extends Abstract_Extension {
 						'operator' => 'IN',
 					),
 				),
-				'fields'           => 'ids', // THIS LINE FILTERS THE SELECT SQL.
+				'fields'         => 'ids', // THIS LINE FILTERS THE SELECT SQL.
 			)
 		);
 
@@ -545,7 +545,7 @@ class Hooks extends Abstract_Extension {
 						'operator' => 'IN',
 					),
 				),
-				'fields'           => 'ids', // THIS LINE FILTERS THE SELECT SQL.
+				'fields'         => 'ids', // THIS LINE FILTERS THE SELECT SQL.
 			)
 		);
 
@@ -1118,11 +1118,11 @@ class Hooks extends Abstract_Extension {
 		}
 
 		$product_ids = is_array( $product_id ) ? $product_id : array( $product_id );
-		$products = wc_get_products(
+		$products    = wc_get_products(
 			array(
-				'include' => $product_ids,
-				'status'  => array(),
-				'limit'   => -1,
+				'include'         => $product_ids,
+				'status'          => array(),
+				'limit'           => -1,
 				'for_searchanise' => true,
 			)
 		);
@@ -1161,7 +1161,7 @@ class Hooks extends Abstract_Extension {
 	 */
 	public function productDataStoreCptGetProductsQuery( $wp_query_args, $query_vars, $object ) {
 		$fix_empty_product_type = isset( $wp_query_args['for_searchanise'] ) && $wp_query_args['for_searchanise'];
-		$is_product_post_type = 'product' == $wp_query_args['post_type'];
+		$is_product_post_type   = 'product' == $wp_query_args['post_type'];
 
 		if ( $fix_empty_product_type && $is_product_post_type ) {
 			foreach ( $wp_query_args['tax_query'] as $index => $tax_query_part ) {

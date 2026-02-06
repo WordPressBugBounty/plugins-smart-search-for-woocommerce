@@ -19,7 +19,7 @@ use Searchanise\SmartWoocommerceSearch\Queue;
  */
 class WcWeglot extends Abstract_Extension {
 
-	const OPTION_NAME = '_transient_weglot_cache_cdn';
+	const OPTION_NAME      = '_transient_weglot_cache_cdn';
 	const SAVE_TIME_OPTION = 30;
 
 	/**
@@ -105,7 +105,7 @@ class WcWeglot extends Abstract_Extension {
 	 */
 	public function deactivateInactiveLanguages() {
 		$addictional_langs = self::getAllWeglotLangs();
-		$active_langs = weglot_get_destination_languages();
+		$active_langs      = weglot_get_destination_languages();
 
 		foreach ( $active_langs as $lang ) {
 			if ( ! in_array( $lang['language_to'], $addictional_langs ) ) {
@@ -448,7 +448,7 @@ class WcWeglot extends Abstract_Extension {
 				try {
 					if ( is_array( $translated_content ) ) {
 						// Replace key name in array so it doesn't translate.
-						$hack = $this->changeKeyName( $translated_content, 'name', 'hack_name' );
+						$hack      = $this->changeKeyName( $translated_content, 'name', 'hack_name' );
 						$translate = $parser->translate( wp_json_encode( $hack ), $original_language, $currently_language, $extra_keys );
 
 						// Return key name back.

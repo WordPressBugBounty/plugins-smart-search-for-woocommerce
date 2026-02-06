@@ -23,7 +23,7 @@ class Installer {
 		self::create_search_results_page();
 
 		if ( ! self::is_searchanise_installed() ) {
-			$tables_result = self::create_tables();
+			$tables_result   = self::create_tables();
 			$settings_result = self::set_default_settings();
 
 			return ! empty( $tables_result ) && ! empty( $settings_result );
@@ -91,7 +91,7 @@ class Installer {
 
 		if ( null == $post_id ) {
 			$page_name = Api::get_instance()->get_system_setting( 'search_result_page' );
-			$post_id = $wpdb->get_var(
+			$post_id   = $wpdb->get_var(
 				$wpdb->prepare(
 					"SELECT
 					ID
@@ -105,7 +105,7 @@ class Installer {
 		}
 
 		if ( $can_edit_post && ( empty( $post_id ) || $force_update ) ) {
-			$content = <<< JS
+			$content   = <<< JS
 <!-- wp:html -->
 <!-- Do NOT edit this page. Searchanise shows the search results here -->
 <div class="snize" id="snize_results"></div>
@@ -164,7 +164,7 @@ JS;
 				if ( strpos( $table->name, '_posts' ) ) {
 					$id = $wpdb->get_var(
 						$wpdb->prepare(
-							'SELECT ID FROM %1s WHERE post_name = %s',
+							'SELECT ID FROM %1$s WHERE post_name = %s',
 							$table->name,
 							$page_name
 						)
@@ -193,7 +193,7 @@ JS;
 		global $wpdb;
 
 		$collate = '';
-		$result = true;
+		$result  = true;
 
 		if ( $wpdb->has_cap( 'collation' ) ) {
 			$collate = $wpdb->get_charset_collate();
@@ -206,7 +206,7 @@ JS;
 				. " lang_code char(8) NOT NULL default 'default',"
 				. " value varchar(255) NOT NULL default '',"
 				. ' PRIMARY KEY (name, lang_code)'
-				. ') %1s;',
+				. ') %1$s;',
 				$collate
 			)
 		) === false || $wpdb->query(
@@ -224,7 +224,7 @@ JS;
 					. ' PRIMARY KEY (queue_id),'
 					. ' KEY status (`status`),'
 					. ' KEY StoreAction (`lang_code`,`action`)'
-					. ') %1s;',
+					. ') %1$s;',
 				$collate
 			)
 		) === false ) {

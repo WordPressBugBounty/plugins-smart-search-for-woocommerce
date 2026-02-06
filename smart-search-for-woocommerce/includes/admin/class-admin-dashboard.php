@@ -14,11 +14,11 @@ defined( 'ABSPATH' ) || exit;
  */
 class Admin_Dashboard {
 
-	const DEFAULT_PERIOD = 'Y';
-	const KEY_PERIOD = 'se-dashboard-period';
-	const KEY_LANGUAGE = 'se-dashboard-language';
-	const KEY_CHECKBOX = 'se-dashboard-select-';
-	const MAX_SEARCHES_STRINGS = 5;
+	const DEFAULT_PERIOD           = 'Y';
+	const KEY_PERIOD               = 'se-dashboard-period';
+	const KEY_LANGUAGE             = 'se-dashboard-language';
+	const KEY_CHECKBOX             = 'se-dashboard-select-';
+	const MAX_SEARCHES_STRINGS     = 5;
 	const MAX_TEXT_SEARCHES_LENGTH = 40;
 
 	/**
@@ -36,7 +36,7 @@ class Admin_Dashboard {
 			return;
 		}
 
-		$se_dashboard_js_path = SE_BASE_DIR . '/assets/js/se-dashboard.js';
+		$se_dashboard_js_path  = SE_BASE_DIR . '/assets/js/se-dashboard.js';
 		$se_dashboard_css_path = SE_BASE_DIR . '/assets/css/se-dashboard.css';
 
 		$dashboard = new self();
@@ -52,49 +52,49 @@ class Admin_Dashboard {
 	 * Display analytics dashboard
 	 */
 	public function analytics_handler() {
-		$this->lang_code = Api::get_instance()->get_locale();
-		$se_dashboard_link = get_admin_url( null, '/admin.php?page=searchanise' );
+		$this->lang_code      = Api::get_instance()->get_locale();
+		$se_dashboard_link    = get_admin_url( null, '/admin.php?page=searchanise' );
 		$period_selector_html = $this->render_periods_selector();
-		$language_selector = $this->render_language_selector();
-		$checkbox_states = $this->get_checkbox_states();
-		$translations = $this->get_translations();
-		$allowed_html = array(
-			'div' => array(
+		$language_selector    = $this->render_language_selector();
+		$checkbox_states      = $this->get_checkbox_states();
+		$translations         = $this->get_translations();
+		$allowed_html         = array(
+			'div'    => array(
 				'class' => array(),
-				'id' => array(),
+				'id'    => array(),
 			),
-			'h2' => array(),
-			'h3' => array(),
-			'p' => array(),
-			'ul' => array(
-				'class' => array(),
-			),
-			'span' => array(
+			'h2'     => array(),
+			'h3'     => array(),
+			'p'      => array(),
+			'ul'     => array(
 				'class' => array(),
 			),
-			'li' => array(
+			'span'   => array(
+				'class' => array(),
+			),
+			'li'     => array(
 				'class' => array(),
 			),
 			'select' => array(
 				'name' => array(),
-				'id' => array(),
+				'id'   => array(),
 			),
 			'option' => array(
-				'value' => array(),
+				'value'    => array(),
 				'selected' => array(),
 			),
-			'input' => array(
-				'type' => array(),
-				'id' => array(),
-				'name' => array(),
-				'value' => array(),
+			'input'  => array(
+				'type'    => array(),
+				'id'      => array(),
+				'name'    => array(),
+				'value'   => array(),
 				'checked' => array(),
 			),
-			'label' => array(
+			'label'  => array(
 				'for' => array(),
 			),
-			'a' => array(
-				'href' => array(),
+			'a'      => array(
+				'href'  => array(),
 				'class' => array(),
 			),
 		);
@@ -175,43 +175,43 @@ HTML;
 	 * @return string
 	 */
 	public function render_language_selector( $output = false ) {
-		$html = '';
-		$engines_data = $this->get_dashboard_engines();
+		$html             = '';
+		$engines_data     = $this->get_dashboard_engines();
 		$current_language = $this->get_current_language();
-		$allowed_html = array(
-			'div' => array(
+		$allowed_html     = array(
+			'div'    => array(
 				'class' => array(),
-				'id' => array(),
+				'id'    => array(),
 			),
-			'h3' => array(),
+			'h3'     => array(),
 			'select' => array(
 				'name' => array(),
-				'id' => array(),
+				'id'   => array(),
 			),
 			'option' => array(
-				'value' => array(),
+				'value'    => array(),
 				'selected' => array(),
 			),
-			'input' => array(
-				'type' => array(),
-				'id' => array(),
-				'name' => array(),
-				'value' => array(),
+			'input'  => array(
+				'type'    => array(),
+				'id'      => array(),
+				'name'    => array(),
+				'value'   => array(),
 				'checked' => array(),
 			),
 		);
 
 		if ( count( $engines_data ) > 1 ) {
-			$html = '<div class="se-language-select-value">';
+			$html  = '<div class="se-language-select-value">';
 			$html .= '<select name="se_language" id="se-language">';
 			foreach ( $engines_data as $e ) {
 				$selected = $e['lang_code'] == $current_language ? ' selected="selected"' : '';
-				$html .= "<option value=\"{$e['lang_code']}\"{$selected}>{$e['language_name']}</option>";
+				$html    .= "<option value=\"{$e['lang_code']}\"{$selected}>{$e['language_name']}</option>";
 			}
 			$html .= '</select></div>';
 			$html .= '<div class="se-language-select-title"><h3>Language</h3></div>';
 		} elseif ( count( $engines_data ) == 1 ) {
-			$e = reset( $engines_data );
+			$e     = reset( $engines_data );
 			$html .= "<input type=\"hidden\" name=\"se_language\" id=\"se-language\" value = \"{$e['lang_code']}\" />";
 		}
 
@@ -230,15 +230,15 @@ HTML;
 	 * @return mixed
 	 */
 	public function render_periods_selector( $output = false ) {
-		$selected_period = $this->get_current_period();
+		$selected_period   = $this->get_current_period();
 		$available_periods = $this->get_available_periods();
-		$allowed_html = array(
+		$allowed_html      = array(
 			'select' => array(
 				'name' => array(),
-				'id' => array(),
+				'id'   => array(),
 			),
 			'option' => array(
-				'value' => array(),
+				'value'    => array(),
 				'selected' => array(),
 			),
 		);
@@ -247,7 +247,7 @@ HTML;
 
 		foreach ( $available_periods as $period => $name ) {
 			$selected = $period == $selected_period ? ' selected="selected"' : '';
-			$html .= "<option value=\"{$period}\"{$selected}>{$name}</option>";
+			$html    .= "<option value=\"{$period}\"{$selected}>{$name}</option>";
 		}
 		$html .= '</select>';
 
@@ -266,12 +266,12 @@ HTML;
 	 */
 	public function get_available_periods() {
 		return array(
-			'W'   => __( 'This week', 'woocommerce-searchanise' ),
-			'LW'  => __( 'Last week', 'woocommerce-searchanise' ),
-			'M'   => __( 'This month', 'woocommerce-searchanise' ),
-			'LM'  => __( 'Last month', 'woocommerce-searchanise' ),
-			'Y'   => __( 'This year', 'woocommerce-searchanise' ),
-			'LY'  => __( 'Last year', 'woocommerce-searchanise' ),
+			'W'  => __( 'This week', 'woocommerce-searchanise' ),
+			'LW' => __( 'Last week', 'woocommerce-searchanise' ),
+			'M'  => __( 'This month', 'woocommerce-searchanise' ),
+			'LM' => __( 'Last month', 'woocommerce-searchanise' ),
+			'Y'  => __( 'This year', 'woocommerce-searchanise' ),
+			'LY' => __( 'Last year', 'woocommerce-searchanise' ),
 		);
 	}
 
@@ -302,7 +302,7 @@ HTML;
 	 * @return string
 	 */
 	public function get_current_period() {
-		$period = self::DEFAULT_PERIOD;
+		$period            = self::DEFAULT_PERIOD;
 		$available_periods = $this->get_available_periods();
 
 		if ( ! empty( $_SESSION[ self::KEY_PERIOD ] ) ) {
@@ -321,10 +321,10 @@ HTML;
 	 */
 	public function get_checkbox_states() {
 		$states = array();
-		$names = array( 'search_data', 'categories_clicks', 'product_clicks', 'suggestions_clicks' );
+		$names  = array( 'search_data', 'categories_clicks', 'product_clicks', 'suggestions_clicks' );
 
 		foreach ( $names as $name ) {
-			$key = self::KEY_CHECKBOX . $name;
+			$key   = self::KEY_CHECKBOX . $name;
 			$value = 'true';
 
 			if ( ! empty( $_SESSION[ $key ] ) ) {

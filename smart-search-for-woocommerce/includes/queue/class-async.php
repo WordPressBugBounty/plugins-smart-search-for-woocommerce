@@ -17,18 +17,18 @@ class Async {
 	const COMPRESS_RATE = 5;
 
 	// Attribute weights.
-	const WEIGHT_SHORT_TITLE          = 100;
-	const WEIGHT_SHORT_DESCRIPTION    = 40;
-	const WEIGHT_DESCRIPTION          = 40;
-	const WEIGHT_DESCRIPTION_GROUPED  = 30;
+	const WEIGHT_SHORT_TITLE         = 100;
+	const WEIGHT_SHORT_DESCRIPTION   = 40;
+	const WEIGHT_DESCRIPTION         = 40;
+	const WEIGHT_DESCRIPTION_GROUPED = 30;
 
-	const WEIGHT_CATEGORIES           = 60;
-	const WEIGHT_TAGS                 = 60;
+	const WEIGHT_CATEGORIES = 60;
+	const WEIGHT_TAGS       = 60;
 
-	const WEIGHT_META_TITLE           = 80;
-	const WEIGHT_META_KEYWORDS        = 100;
-	const WEIGHT_META_DESCRIPTION     = 40;
-	const WEIGHT_META_FIELD           = 60;
+	const WEIGHT_META_TITLE       = 80;
+	const WEIGHT_META_KEYWORDS    = 100;
+	const WEIGHT_META_DESCRIPTION = 40;
+	const WEIGHT_META_FIELD       = 60;
 
 	const WEIGHT_SELECT_ATTRIBUTES    = 60;
 	const WEIGHT_TEXT_ATTRIBUTES      = 60;
@@ -39,19 +39,19 @@ class Async {
 	const THUMBNAIL_SIZE = 70;
 
 	// Async statuses.
-	const STATUS_ASYNC_DISABLED    = 'disabled';
-	const STATUS_ASYNC_PROCESSING  = 'processing';
-	const STATUS_ASYNC_ERROR_LANG  = 'lang_error';
-	const STATUS_ASYNC_OK          = 'OK';
+	const STATUS_ASYNC_DISABLED   = 'disabled';
+	const STATUS_ASYNC_PROCESSING = 'processing';
+	const STATUS_ASYNC_ERROR_LANG = 'lang_error';
+	const STATUS_ASYNC_OK         = 'OK';
 
 	// Async request flags.
-	const FL_SHOW_STATUS_ASYNC      = 'show_status';
-	const FL_SHOW_STATUS_ASYNC_KEY  = 'Y';
-	const FL_IGNORE_PROCESSING      = 'ignore_processing';
-	const FL_IGNORE_PROCESSING_KEY  = 'Y';
-	const FL_DISPLAY_ERRORS         = 'display_errors';
-	const FL_DISPLAY_ERRORS_KEY     = 'Y';
-	const FL_LANG_CODE              = 'lang_code';
+	const FL_SHOW_STATUS_ASYNC     = 'show_status';
+	const FL_SHOW_STATUS_ASYNC_KEY = 'Y';
+	const FL_IGNORE_PROCESSING     = 'ignore_processing';
+	const FL_IGNORE_PROCESSING_KEY = 'Y';
+	const FL_DISPLAY_ERRORS        = 'display_errors';
+	const FL_DISPLAY_ERRORS_KEY    = 'Y';
+	const FL_LANG_CODE             = 'lang_code';
 
 	// Prefixes.
 	const PRODUCT_META_FIELD_PREFIX = 'product_meta_field_';
@@ -168,10 +168,10 @@ class Async {
 	public static function add_async_objects( $async_url ) {
 		$allowed_tags = array(
 			'object' => array(
-				'data' => array(),
-				'width' => array(),
+				'data'   => array(),
+				'width'  => array(),
 				'height' => array(),
-				'type' => array(),
+				'type'   => array(),
 			),
 		);
 		echo wp_kses( "<object data=\"{$async_url}?action=se_async\" width=\"0\" height=\"0\" type=\"text/html\"></object>", $allowed_tags );
@@ -361,7 +361,7 @@ class Async {
 							break;
 
 						case Queue::UPDATE_ATTRIBUTES:
-							$facets = array();
+							$facets          = array();
 							$product_filters = $this->get_product_filters( $engine['lang_code'] );
 
 							foreach ( $product_filters as $filter ) {
@@ -369,7 +369,7 @@ class Async {
 							}
 
 							if ( ! empty( $facets ) ) {
-								$facets_data = array( 'schema' => $facets );
+								$facets_data   = array( 'schema' => $facets );
 								$data_for_send = $this->get_translate( $facets_data, $engine['lang_code'] );
 							} else {
 								$status = true;
@@ -432,7 +432,7 @@ class Async {
 			} catch ( Searchanise_Exception $e ) {
 				Profiler::end_block( $q->action . ':' . $q->queue_id );
 				$status = false;
-				$error = $e->getMessage();
+				$error  = $e->getMessage();
 				Logger::get_instance()->error(
 					array(
 						'q'     => $q,
@@ -512,24 +512,24 @@ class Async {
 	 * @return boolean
 	 */
 	private function add_task_by_chunk( $lang_code, $action, $is_only_active = true ) {
-		$i = 0;
-		$step = 50;
+		$i     = 0;
+		$step  = 50;
 		$start = 0;
-		$max = 0;
+		$max   = 0;
 
 		switch ( $action ) {
 			case Queue::UPDATE_PRODUCTS:
-				$step = Api::get_instance()->get_products_per_pass() * 50;
+				$step              = Api::get_instance()->get_products_per_pass() * 50;
 				list($start, $max) = $this->get_min_max_product_id( $is_only_active, $lang_code );
 				break;
 
 			case Queue::UPDATE_CATEGORIES:
-				$step = Api::get_instance()->get_categories_per_pass() * 50;
+				$step              = Api::get_instance()->get_categories_per_pass() * 50;
 				list($start, $max) = $this->get_min_max_category_id( $lang_code );
 				break;
 
 			case Queue::UPDATE_PAGES:
-				$step = Api::get_instance()->get_pages_per_pass() * 50;
+				$step              = Api::get_instance()->get_pages_per_pass() * 50;
 				list($start, $max) = $this->get_min_max_page_id( $lang_code );
 				break;
 
@@ -558,7 +558,7 @@ class Async {
 				break;
 			}
 
-			$end = max( $chunk_item_id );
+			$end   = max( $chunk_item_id );
 			$start = $end + 1;
 
 			$chunk_item_id = array_chunk( $chunk_item_id, Api::get_instance()->get_products_per_pass() );
@@ -905,7 +905,7 @@ class Async {
 	 * @return array
 	 */
 	public function get_attribute_filters( $lang_code, $position = 30 ) {
-		$filters = array();
+		$filters    = array();
 		$attributes = wc_get_attribute_taxonomies();
 
 		foreach ( $attributes as $attr ) {
@@ -914,11 +914,11 @@ class Async {
 		}
 
 		$system_custom_attributtes = Api::get_instance()->get_custom_attributes();
-		$custom_attributes = $this->check_attributtes( $system_custom_attributtes );
+		$custom_attributes         = $this->check_attributtes( $system_custom_attributtes );
 
 		if ( ! empty( $custom_attributes ) ) {
 			foreach ( $custom_attributes as $custom ) {
-				$taxonomy = get_taxonomy( $custom );
+				$taxonomy  = get_taxonomy( $custom );
 				$filters[] = self::generate_filter_from_attribute( $taxonomy, $lang_code, 'select', $position );
 				$position += 5;
 			}
@@ -969,7 +969,7 @@ class Async {
 	 * @return array
 	 */
 	public function get_product_tags( $lang_code ) {
-		$product_tags = array();
+		$product_tags  = array();
 		$_product_tags = get_terms(
 			array(
 				'taxonomy'   => 'product_tag',
@@ -979,7 +979,7 @@ class Async {
 
 		foreach ( $_product_tags as $tag_term ) {
 			$product_tags[] = $tag_term instanceof \WP_Term ? array(
-				'name' => $tag_term->slug,
+				'name'  => $tag_term->slug,
 				'label' => $tag_term->name,
 			) : $tag_term;
 		}
@@ -1004,9 +1004,9 @@ class Async {
 	 * @return array
 	 */
 	public function prepare_facet_data( $filter, $lang_code ) {
-		$entry = array();
+		$entry                   = array();
 		static $color_attributes = array();
-		static $size_attributes = array();
+		static $size_attributes  = array();
 
 		if ( empty( $color_attributes ) ) {
 			$color_attributes = Api::get_instance()->get_color_attributes();
@@ -1066,10 +1066,10 @@ class Async {
 
 			$excluded_product_ids = wc_get_products(
 				array(
-					'tag'     => $excluded_tags,
-					'limit'   => -1,
+					'tag'             => $excluded_tags,
+					'limit'           => -1,
 					'for_searchanise' => true,
-					'return' => 'ids',
+					'return'          => 'ids',
 				)
 			);
 		}
@@ -1098,16 +1098,16 @@ class Async {
 	 */
 	public function get_products_data( $product_ids, $lang_code, $lf_echo = true ) {
 		$products = array();
-		$schema = array();
-		$items = array();
+		$schema   = array();
+		$items    = array();
 
 		$product_ids = array_diff( (array) $product_ids, $this->get_excluded_product_ids() );
 
 		if ( ! empty( $product_ids ) ) {
 			$products = wc_get_products(
 				array(
-					'include' => $product_ids,
-					'limit'   => -1,
+					'include'         => $product_ids,
+					'limit'           => -1,
 					'for_searchanise' => true,
 				)
 			);
@@ -1311,8 +1311,8 @@ class Async {
 		$current_user->roles = array();
 
 		// General common prices.
-		$prices = $this->generate_product_prices( $product_data, $children_products, $lang_code );
-		$entry['price'] = array(
+		$prices              = $this->generate_product_prices( $product_data, $children_products, $lang_code );
+		$entry['price']      = array(
 			'value' => (float) $prices['price'],
 			'title' => __( 'Price', 'woocommerce' ),
 			'type'  => 'float',
@@ -1327,7 +1327,7 @@ class Async {
 			'title' => __( 'Sale price', 'woocommerce' ),
 			'type'  => 'float',
 		);
-		$entry['max_price'] = array(
+		$entry['max_price']  = array(
 			'value' => (float) $prices['max_price'],
 			'title' => __( 'Max price', 'woocommerce' ),
 			'type'  => 'float',
@@ -1346,7 +1346,7 @@ class Async {
 			foreach ( $this->get_user_groups() as $role ) {
 				// Set user role and generate price for it.
 				$current_user->roles = array( $role );
-				$prices = $this->generate_product_prices( $product_data, $children_products, $lang_code );
+				$prices              = $this->generate_product_prices( $product_data, $children_products, $lang_code );
 
 				$entry[ Api::LABEL_FOR_PRICES_USERGROUP . $role ] = array(
 					'value' => (float) $prices['price'],
@@ -1400,11 +1400,11 @@ class Async {
 
 		} elseif ( $product_data instanceof \WC_Product_Grouped ) {
 			// Grouped product.
-			$child_prices = array();
+			$child_prices         = array();
 			$child_regular_prices = array();
-			$child_sale_prices = array();
-			$discounts = array();
-			$children = ! empty( $children_products ) ? $children_products : $this->get_children_products( $product_data );
+			$child_sale_prices    = array();
+			$discounts            = array();
+			$children             = ! empty( $children_products ) ? $children_products : $this->get_children_products( $product_data );
 
 			foreach ( $children as $child ) {
 				$_child_prices = $this->generate_product_prices( $child, null, $lang_code );
@@ -1496,7 +1496,7 @@ class Async {
 	public function get_variation_product_prices( $product_data ) {
 		// Variable product.
 		$variations = $product_data->get_available_variations();
-		$discounts = array();
+		$discounts  = array();
 
 		foreach ( $variations as $v ) {
 			if (
@@ -1531,15 +1531,15 @@ class Async {
 	 */
 	public function get_simple_product_prices( $product_data ) {
 		if ( $product_data->is_on_sale() ) {
-			$price = wc_get_price_to_display( $product_data, array( 'price' => $product_data->get_sale_price() ) );
+			$price     = wc_get_price_to_display( $product_data, array( 'price' => $product_data->get_sale_price() ) );
 			$max_price = $price;
 		} else {
-			$price = wc_get_price_to_display( $product_data );
+			$price     = wc_get_price_to_display( $product_data );
 			$max_price = $price;
 		}
 
-		$regular_price      = wc_get_price_to_display( $product_data, array( 'price' => $product_data->get_regular_price() ) );
-		$sale_price         = wc_get_price_to_display( $product_data, array( 'price' => $product_data->get_sale_price() ) );
+		$regular_price = wc_get_price_to_display( $product_data, array( 'price' => $product_data->get_regular_price() ) );
+		$sale_price    = wc_get_price_to_display( $product_data, array( 'price' => $product_data->get_sale_price() ) );
 
 		$prices = array(
 			'price'         => $price,
@@ -1645,48 +1645,48 @@ class Async {
 		}
 
 		$entry = array(
-			'id' => array(
+			'id'                => array(
 				'value' => $product_data->get_id(),
 				'title' => __( 'product Id', 'woocommerce-searchanise' ),
 			),
-			'title' => array(
+			'title'             => array(
 				'value'  => $product_data->get_name(),
 				'title'  => __( 'Product Title', 'woocommerce' ),
 				'weight' => self::WEIGHT_SHORT_TITLE,
 			),
-			'slug' => array(
+			'slug'              => array(
 				'value' => $product_data->get_slug(),
 				'title' => __( 'Slug', 'woocommerce' ),
 			),
-			'summary' => array(
+			'summary'           => array(
 				'value' => $this->remove_content_noise( $product_data->get_short_description() != '' ? $product_data->get_short_description() : $product_data->get_description() ),
 				'title' => __( 'Summary', 'woocommerce-searchanise' ),
 			),
-			'product_type' => array(
+			'product_type'      => array(
 				'value' => $product_data->get_type(),
 				'title' => __( 'Product Type', 'woocommerce' ),
 			),
-			'link' => array(
+			'link'              => array(
 				'value' => Api::get_instance()->get_language_link( $product_data->get_permalink(), $lang_code ),
 				'title' => __( 'Product URL', 'woocommerce-searchanise' ),
 			),
-			'product_code' => array(
+			'product_code'      => array(
 				'value'  => $product_data->get_sku(),
 				'title'  => __( 'SKU', 'woocommerce' ),
 				'weight' => self::WEIGHT_SHORT_TITLE,
 			),
-			'visibility' => array(
+			'visibility'        => array(
 				'value' => $product_data->get_catalog_visibility(), // visible | catalog | search | hidden.
 				'title' => __( 'Visibility', 'woocommerce' ),
 			),
-			'status' => array(
+			'status'            => array(
 				'value' => $product_data->get_status(), // published, trash, private, ...
 				'title' => __( 'Status', 'woocommerce' ),
 			),
-			'image_link' => array(
+			'image_link'        => array(
 				'title' => __( 'Image link', 'woocommerce-searchanise' ),
 			),
-			'needs_shipping' => array(
+			'needs_shipping'    => array(
 				'value' => $product_data->needs_shipping() ? 'N' : 'Y',
 				'title' => __( 'Free shipping', 'woocommerce' ),
 			),
@@ -1694,35 +1694,35 @@ class Async {
 				'value' => $product_data->get_sold_individually() ? 'Y' : 'N',
 				'title' => __( 'Sold individually', 'woocommerce' ),
 			),
-			'virtual' => array(
+			'virtual'           => array(
 				'value' => $product_data->get_virtual() ? 'Y' : 'N',
 				'title' => __( 'Virutal', 'woocommerce' ),
 			),
-			'downloadable' => array(
+			'downloadable'      => array(
 				'value' => $product_data->get_downloadable() ? 'Y' : 'N',
 				'title' => __( 'Downloadable', 'woocommerce' ),
 			),
-			'menu_order' => array(
+			'menu_order'        => array(
 				'value' => $product_data->get_menu_order(),
 				'title' => __( 'Menu order', 'woocommerce' ),
 				'type'  => 'int',
 			),
-			'weight' => array(
+			'weight'            => array(
 				'value' => (float) $product_data->get_weight(),
 				'title' => __( 'Weight', 'woocommerce' ),
 				'type'  => 'float',
 			),
-			'length' => array(
+			'length'            => array(
 				'value' => (float) $product_data->get_length(),
 				'title' => __( 'Length', 'woocommerce' ),
 				'type'  => 'float',
 			),
-			'width' => array(
+			'width'             => array(
 				'value' => (float) $product_data->get_width(),
 				'title' => __( 'Width', 'woocommerce' ),
 				'type'  => 'float',
 			),
-			'height' => array(
+			'height'            => array(
 				'value' => (float) $product_data->get_height(),
 				'title' => __( 'Height', 'woocommerce' ),
 				'type'  => 'float',
@@ -1731,9 +1731,9 @@ class Async {
 
 		if ( $product_data instanceof \WC_Product_Variable ) {
 			// Variable product.
-			$variations = $product_data->get_available_variations();
-			$variants = array();
-			$variants_skus = array();
+			$variations            = $product_data->get_available_variations();
+			$variants              = array();
+			$variants_skus         = array();
 			$variants_descriptions = array();
 
 			foreach ( $variations as $v ) {
@@ -1760,7 +1760,7 @@ class Async {
 				// Adds attributes.
 				if ( ! empty( $v['attributes'] ) ) {
 					foreach ( $v['attributes'] as $attr_name => $attr_val ) {
-						$parsed_attr_name = str_replace( 'attribute_pa_', '', $attr_name );
+						$parsed_attr_name                           = str_replace( 'attribute_pa_', '', $attr_name );
 						$variant['attributes'][ $parsed_attr_name ] = $attr_val;
 					}
 				}
@@ -1861,7 +1861,7 @@ class Async {
 
 			if ( ! empty( $gallery_image_ids ) ) {
 				$gallery_images = array();
-				$i = 0;
+				$i              = 0;
 
 				foreach ( $gallery_image_ids as $image_id ) {
 					if ( $i <= self::LIMIT_WOOCOMMERCE_IMAGES ) {
@@ -1871,7 +1871,7 @@ class Async {
 							$gallery_images[] = htmlspecialchars( $image_url, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 );
 						}
 
-						$i++;
+						++$i;
 					}
 				}
 
@@ -1896,7 +1896,7 @@ class Async {
 		}
 
 		// Adds stock data.
-		$entry['quantity'] = array(
+		$entry['quantity']     = array(
 			'value' => $this->get_product_quantity( $product_data, isset( $children ) ? $children : array() ),
 			'title' => __( 'Stock quantity', 'woocommerce' ),
 			'type'  => 'int',
@@ -1906,13 +1906,13 @@ class Async {
 			'title' => __( 'Stock status', 'woocommerce' ),
 			'value' => $this->get_stock_status( $product_data, $lang_code ),
 		);
-		$entry['is_in_stock'] = array(
+		$entry['is_in_stock']  = array(
 			'name'  => 'is_in_stock',
 			'value' => 0 !== $entry['quantity']['value'] ? 'Y' : 'N',
 		);
 
 		// Adds product attributes.
-		$attributes = $product_data->get_attributes();
+		$attributes        = $product_data->get_attributes();
 		$custom_attributes = $this->check_attributtes( Api::get_instance()->get_custom_attributes() );
 
 		if ( ! empty( $attributes ) ) {
@@ -1932,7 +1932,7 @@ class Async {
 		}
 
 		// Add dates.
-		$created = $product_data->get_date_created();
+		$created  = $product_data->get_date_created();
 		$modified = $product_data->get_date_modified();
 
 		if ( $created instanceof \WC_DateTime ) {
@@ -1965,7 +1965,7 @@ class Async {
 
 		// Adds review data.
 		if ( 'yes' === get_option( 'woocommerce_enable_reviews', 'yes' ) && $product_data->get_reviews_allowed() ) {
-			$entry['total_reviews'] = array(
+			$entry['total_reviews']         = array(
 				'value' => (int) $product_data->get_review_count(),
 				'title' => __( 'Total reviews', 'woocommerce-searchanise' ),
 			);
@@ -1998,11 +1998,11 @@ class Async {
 
 		// Adds sales data.
 		$entry['sales_amount'] = array(
-			'name'       => 'sales_amount',
-			'title'      => __( 'Sales amount', 'woocommerce' ),
+			'name'        => 'sales_amount',
+			'title'       => __( 'Sales amount', 'woocommerce' ),
 			'text_search' => 'N',
-			'type'       => 'int',
-			'value'      => (int) get_post_meta( $product_data->get_id(), 'total_sales', true ),
+			'type'        => 'int',
+			'value'       => (int) get_post_meta( $product_data->get_id(), 'total_sales', true ),
 		);
 		// TODO: sales_total.
 
@@ -2010,10 +2010,10 @@ class Async {
 		$usergroup_ids = $this->get_products_usergroup_ids( $product_data, $lang_code );
 		if ( ! empty( $usergroup_ids ) ) {
 			$entry['usergroup_ids'] = array(
-				'name'       => 'usergroup_ids',
-				'title'      => __( 'User role', 'woocommerce' ) . ' - IDs',
+				'name'        => 'usergroup_ids',
+				'title'       => __( 'User role', 'woocommerce' ) . ' - IDs',
 				'text_search' => 'N',
-				'value'      => $usergroup_ids,
+				'value'       => $usergroup_ids,
 			);
 		}
 
@@ -2139,7 +2139,7 @@ class Async {
 				'meta_keywords'    => '_keywords',
 			),
 			'Hybrid'       => array(
-				'meta_title'  => 'Title',
+				'meta_title'       => 'Title',
 				'meta_description' => 'Description',
 				'meta_keywords'    => 'Keywords',
 			),
@@ -2157,7 +2157,7 @@ class Async {
 
 		$seometa_plugins = array(
 			// alphabatized.
-			'Add Meta Tags' => array(
+			'Add Meta Tags'                => array(
 				'meta_title'       => '_amt_title',
 				'meta_description' => '_amt_description',
 				'meta_keywords'    => '_amt_keywords',
@@ -2173,7 +2173,7 @@ class Async {
 				'meta_keywords'    => '_ghpseo_keywords',
 			),
 			'Headspace2'                   => array(
-				'meta_title'      => '_headspace_page_title',
+				'meta_title'       => '_headspace_page_title',
 				'meta_description' => '_headspace_description',
 				'meta_keywords'    => '_headspace_keywords',
 			),
@@ -2182,7 +2182,7 @@ class Async {
 				'meta_description' => '_wds_metadesc',
 				'meta_keywords'    => '_wds_keywords',
 			),
-			'Jetpack'                => array(
+			'Jetpack'                      => array(
 				'meta_description' => 'advanced_seo_description',
 			),
 			'Meta SEO Pack'                => array(
@@ -2194,7 +2194,7 @@ class Async {
 				'meta_description' => 'description',
 				'meta_keywords'    => 'keywords',
 			),
-			'SEOpressor'                 => array(
+			'SEOpressor'                   => array(
 				'meta_title'       => '_seopressor_meta_title',
 				'meta_description' => '_seopressor_meta_description',
 			),
@@ -2214,10 +2214,10 @@ class Async {
 			),
 		);
 
-		$meta_data = array(
-			'meta_title' => array(),
+		$meta_data         = array(
+			'meta_title'       => array(),
 			'meta_description' => array(),
-			'meta_keywords' => array(),
+			'meta_keywords'    => array(),
 		);
 		$seometa_platforms = array_merge( $seometa_themes, $seometa_plugins );
 
@@ -2239,7 +2239,7 @@ class Async {
 		}
 
 		// Filter for Yoast SEO.
-		$meta_data['meta_title'] = str_replace( array( '%%title%%', '%%sep%%', '%%sitename%%', '%%page%%' ), array( '', '', '', '' ), $meta_data['meta_title'] );
+		$meta_data['meta_title']       = str_replace( array( '%%title%%', '%%sep%%', '%%sitename%%', '%%page%%' ), array( '', '', '', '' ), $meta_data['meta_title'] );
 		$meta_data['meta_description'] = str_replace( array( '%%title%%', '%%sep%%', '%%sitename%%', '%%page%%' ), array( '', '', '', '' ), $meta_data['meta_description'] );
 
 		/**
@@ -2294,8 +2294,8 @@ class Async {
 	public function generate_product_attribute( &$entry, $attr, $lang_code ) {
 		if ( $attr->is_taxonomy() ) {
 			$taxonomy_object = $attr->get_taxonomy_object();
-			$terms = $attr->get_terms();
-			$variants = array();
+			$terms           = $attr->get_terms();
+			$variants        = array();
 
 			foreach ( $terms as $term ) {
 				if ( Api::get_instance()->is_result_widget_enabled( $lang_code ) ) {
@@ -2333,7 +2333,7 @@ class Async {
 				'weight'      => $attr->get_visible() ? self::WEIGHT_TEXT_ATTRIBUTES : 0,
 				'value'       => $attr->get_options(),
 			);
-			$attribute_id = self::get_attribute_id( $attr );
+			$attribute_id   = self::get_attribute_id( $attr );
 
 			if ( ! empty( $attribute_id ) ) {
 				/**
@@ -2394,7 +2394,7 @@ class Async {
 		$stock_status = $product->get_stock_status();
 
 		if ( Api::get_instance()->is_result_widget_enabled( $lang_code ) ) {
-			$statuses = wc_get_product_stock_status_options();
+			$statuses     = wc_get_product_stock_status_options();
 			$stock_status = $statuses[ $product->get_stock_status() ];
 		}
 
@@ -2422,7 +2422,7 @@ class Async {
 
 		if ( ( get_option( 'woocommerce_manage_stock' ) == 'yes' && $product->get_manage_stock() ) || ! empty( $united_products ) ) {
 			$out_of_stock_amount = (int) get_option( 'woocommerce_notify_no_stock_amount' );
-			$quantity = max( 0, $product->get_stock_quantity() - $out_of_stock_amount );
+			$quantity            = max( 0, $product->get_stock_quantity() - $out_of_stock_amount );
 
 			if ( $quantity <= 0 ) {
 				$quantity = $this->get_quantity( $product->get_stock_status() );
@@ -2465,7 +2465,7 @@ class Async {
 			return;
 		}
 
-		$all_product_ids = array();
+		$all_product_ids  = array();
 		$also_bought_data = array();
 		foreach ( $products as $product ) {
 			$all_product_ids[] = $product->get_id();
@@ -2542,7 +2542,7 @@ class Async {
 		global $wpdb;
 
 		$results = array();
-		$pid = array_map( 'intval', $product_ids );
+		$pid     = array_map( 'intval', $product_ids );
 
 		// Fetch all order for products.
 		$_all_orders = $wpdb->get_results(
@@ -2559,11 +2559,11 @@ class Async {
 			ARRAY_A
 		);
 
-		$all_orders = array();
+		$all_orders     = array();
 		$all_orders_ids = array();
 		foreach ( $_all_orders as $data ) {
 			$all_orders[ $data['product_id'] ][] = $data['order_id'];
-			$all_orders_ids[] = $data['order_id'];
+			$all_orders_ids[]                    = $data['order_id'];
 		}
 		unset( $_all_orders );
 
@@ -2571,7 +2571,7 @@ class Async {
 			$all_orders_ids = array_map( 'intval', $all_orders_ids );
 
 			// Fetch all order items for selected orders.
-			$all_orders_products = array();
+			$all_orders_products  = array();
 			$_all_orders_products = $wpdb->get_results(
 				$wpdb->prepare(
 					"SELECT
@@ -2622,7 +2622,7 @@ class Async {
 	 */
 	public function get_categories_data( $category_ids, $lang_code ) {
 		$categories = array();
-		$data = array();
+		$data       = array();
 
 		if ( ! empty( $category_ids ) ) {
 			$categories = get_terms(
@@ -2649,13 +2649,13 @@ class Async {
 			}
 
 			$category_data = array(
-				'id'            => $cat->term_id,
-				'parent_id'     => $cat->parent,
-				'path'          => $cat->parent ? implode( '/', array_reverse( get_ancestors( $cat->term_id, 'product_cat', 'taxonomy' ) ) ) . '/' . $cat->term_id : '',
-				'link'          => Api::get_instance()->get_language_link( get_term_link( $cat ), $lang_code ),
-				'title'         => $cat->name,
-				'summary'       => $cat->description,
-				'image_link'    => $image_url,
+				'id'         => $cat->term_id,
+				'parent_id'  => $cat->parent,
+				'path'       => $cat->parent ? implode( '/', array_reverse( get_ancestors( $cat->term_id, 'product_cat', 'taxonomy' ) ) ) . '/' . $cat->term_id : '',
+				'link'       => Api::get_instance()->get_language_link( get_term_link( $cat ), $lang_code ),
+				'title'      => $cat->name,
+				'summary'    => $cat->description,
+				'image_link' => $image_url,
 			);
 
 			/**
@@ -2685,13 +2685,13 @@ class Async {
 	 */
 	public function get_pages_data( $page_ids, $lang_code ) {
 		$pages = array();
-		$data = array();
+		$data  = array();
 
 		if ( ! empty( $page_ids ) ) {
 			$pages = get_posts(
 				array(
-					'include'     => (array) $page_ids,
-					'post_type'   => self::get_post_types(),
+					'include'   => (array) $page_ids,
+					'post_type' => self::get_post_types(),
 				)
 			);
 		}
@@ -2903,7 +2903,7 @@ class Async {
 	 */
 	public function generate_custom_product_attribute() {
 		$custom_attributes = array();
-		$taxonomies = get_option( 'cptui_taxonomies', array() );
+		$taxonomies        = get_option( 'cptui_taxonomies', array() );
 
 		foreach ( $taxonomies as $tax ) {
 			if ( in_array( 'product', $tax['object_types'] ) ) {
@@ -2935,7 +2935,7 @@ class Async {
 	 */
 	public function generate_custom_attribute( &$entry, $attributes, $data, $lang_code ) {
 		foreach ( $attributes as $custom ) {
-			$terms = wc_get_product_terms( $data->get_id(), $custom, array( 'fields' => 'all' ) );
+			$terms    = wc_get_product_terms( $data->get_id(), $custom, array( 'fields' => 'all' ) );
 			$taxonomy = get_taxonomy( $custom );
 
 			$attribute_data = array(
@@ -2996,7 +2996,7 @@ class Async {
 			} else {
 				$options[] = $term->slug;
 			}
-		};
+		}
 
 		return $options;
 	}
@@ -3010,7 +3010,7 @@ class Async {
 	 */
 	public function check_attributtes( $custom_attributes ) {
 		$attributtes = $this->generate_custom_product_attribute();
-		$custom = array();
+		$custom      = array();
 
 		foreach ( $attributtes as $attr ) {
 			if ( in_array( $attr['name'], $custom_attributes ) ) {

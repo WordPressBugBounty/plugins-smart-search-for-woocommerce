@@ -44,12 +44,12 @@ class Upgrade {
 		if ( SE_PLUGIN_VERSION != $old_version ) {
 			// Process addon upgrade.
 			list($old_major_version, $old_minor_version, $old_path_version) = explode( '.', $old_version );
-			list($new_major, $new_minor, $new_path_version) = explode( '.', SE_PLUGIN_VERSION );
+			list($new_major, $new_minor, $new_path_version)                 = explode( '.', SE_PLUGIN_VERSION );
 
 			for ( $current_ver = $old_path_version; $current_ver < $new_path_version; $current_ver++ ) {
 				$from_version = $old_major_version . $old_minor_version . $current_ver;
-				$to_version = $old_major_version . $old_minor_version . ( $current_ver + 1 );
-				$upgrade_fn = 'upgrade_' . $from_version . '_to_' . $to_version;
+				$to_version   = $old_major_version . $old_minor_version . ( $current_ver + 1 );
+				$upgrade_fn   = 'upgrade_' . $from_version . '_to_' . $to_version;
 
 				if ( is_callable( array( __CLASS__, $upgrade_fn ) ) ) {
 					call_user_func( array( __CLASS__, $upgrade_fn ) );
@@ -72,9 +72,9 @@ class Upgrade {
 
 		Installer::set_default_settings();
 
-		$search_input_selector = get_option( 'se_search_field_id' );
+		$search_input_selector  = get_option( 'se_search_field_id' );
 		$use_direct_image_links = get_option( 'se_use_resize_images' ) == 'Y' ? 'Y' : 'N';
-		$exported_attributes = get_option( 'se_exported_attributes' );
+		$exported_attributes    = get_option( 'se_exported_attributes' );
 
 		foreach ( array( 'se_search_field_id', 'se_use_resize_images', 'se_exported_attributes', 'se_queue_mod', 'se_every_minute', 'se_widget_info', 'se_last_resync', 'se_last_request' ) as $to_delete ) {
 			delete_option( $to_delete );
@@ -128,7 +128,7 @@ class Upgrade {
 			);
 			foreach ( $database_tables as $table ) {
 				if ( strpos( $table->name, '_posts' ) ) {
-					$id = $wpdb->get_var( $wpdb->prepare( 'SELECT ID FROM %1s WHERE post_name = %s', $table->name, 'searchanise' ) );
+					$id = $wpdb->get_var( $wpdb->prepare( 'SELECT ID FROM %1$s WHERE post_name = %s', $table->name, 'searchanise' ) );
 					if ( ! empty( $id ) ) {
 						$result = $wpdb->delete( $table->name, array( 'ID' => $id ) );
 					}

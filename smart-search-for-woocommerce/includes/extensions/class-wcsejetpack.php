@@ -213,7 +213,7 @@ class WcSeJetpack extends Abstract_Extension {
 	 */
 	public function seGetCurrencyRate( $currency_rate ) {
 		if ( $this->isMulticurrencyActive() ) {
-			$currency = wcj_session_get( 'wcj-currency' );
+			$currency      = wcj_session_get( 'wcj-currency' );
 			$currency_rate = 1.0 / $this->getCurrencyExchangeRate( $currency );
 		}
 

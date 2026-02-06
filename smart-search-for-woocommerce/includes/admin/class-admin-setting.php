@@ -38,13 +38,13 @@ class Admin_Setting {
 	public function set_section_tabs( $settings_tab ) {
 		global $current_section;
 
-		$sections = array(
+		$sections     = array(
 			''     => 'General',
 			'info' => 'Info',
 		);
 		$allowed_tags = array(
-			'a' => array(
-				'href' => array(),
+			'a'  => array(
+				'href'  => array(),
 				'class' => array(),
 			),
 			'li' => array(),
@@ -98,7 +98,7 @@ class Admin_Setting {
 	 */
 	public function get_semultiselect_field( $value ) {
 		$option_value = $value['value'];
-		$description = $value['desc'] ? '<p class="description">' . wp_kses_post( $value['desc'] ) . '</p>' : false;
+		$description  = $value['desc'] ? '<p class="description">' . wp_kses_post( $value['desc'] ) . '</p>' : false;
 		?>
 		<tr valign="top">
 			<th scope="row" class="titledesc">
@@ -128,7 +128,7 @@ class Admin_Setting {
 				echo wp_kses(
 					$description,
 					array(
-						'p' => array(),
+						'p'  => array(),
 						'br' => array(),
 					)
 				);
@@ -161,7 +161,7 @@ class Admin_Setting {
 	 * @return array $settings_tabs
 	 */
 	public function set_settings_tab( $settings_tabs ) {
-		$settings_tabs['searchanise_settings'] = Api::get_instance()->get_woocommerce_plugin_version() ? SE_PRODUCT_NAME : __( 'Searchanise', 'woocommerce-searchanise' );
+		$settings_tabs['searchanise_settings'] = Api::get_instance()->get_woocommerce_plugin_version() ? Api::get_instance()->get_product_name() : __( 'Searchanise', 'woocommerce-searchanise' );
 
 		return $settings_tabs;
 	}
@@ -192,13 +192,13 @@ class Admin_Setting {
 	public function get_settings() {
 		// General settings.
 		$settings = array(
-			'se_page_option_general_start' => array(
-				'name'     => __( 'General', 'woocommerce-searchanise' ),
-				'type'     => 'title',
-				'desc'     => '',
-				'id'       => 'se_page_option_general',
+			'se_page_option_general_start'  => array(
+				'name' => __( 'General', 'woocommerce-searchanise' ),
+				'type' => 'title',
+				'desc' => '',
+				'id'   => 'se_page_option_general',
 			),
-			'se_search_input_selector' => array(
+			'se_search_input_selector'      => array(
 				'name'       => __( 'Search input jQuery selector', 'woocommerce-searchanise' ),
 				'type'       => 'text',
 				'field_name' => 'se_search_input_selector',
@@ -206,7 +206,7 @@ class Admin_Setting {
 				'id'         => 'se_search_input_selector',
 				'value'      => Api::get_instance()->get_search_input_selector(),
 			),
-			'se_search_result_page' => array(
+			'se_search_result_page'         => array(
 				'name'       => __( 'Search results page', 'woocommerce-searchanise' ),
 				'type'       => 'text',
 				'field_name' => 'se_search_result_page',
@@ -214,16 +214,16 @@ class Admin_Setting {
 				'value'      => Api::get_instance()->get_search_results_page(),
 			),
 			'se_enabled_searchanise_search' => array(
-				'name' => __( 'Use Searchanise for Full-text search', 'woocommerce-searchanise' ),
-				'type' => 'select',
-				'desc' => __( 'Disable in case of invalid search operation. The instant search widget will <b>remain active</b>.', 'woocommerce-searchanise' ),
-				'id'   => 'se_enabled_searchanise_search',
+				'name'    => __( 'Use Searchanise for Full-text search', 'woocommerce-searchanise' ),
+				'type'    => 'select',
+				'desc'    => __( 'Disable in case of invalid search operation. The instant search widget will <b>remain active</b>.', 'woocommerce-searchanise' ),
+				'id'      => 'se_enabled_searchanise_search',
 				'options' => array(
 					'Y' => 'Yes',
 					'N' => 'No',
 				),
 			),
-			'se_use_wp_jquery' => array(
+			'se_use_wp_jquery'              => array(
 				'name'    => __( 'Use WordPress integrated jQuery version', 'woocommerce-searchanise' ),
 				'type'    => 'select',
 				'desc'    => __( 'Select "Yes" to use WordPress integrated jQuery version instead of Searchanise CDN version on the frontend of your website. It reduces the traffic and makes the website a little faster.', 'woocommerce-searchanise' ),
@@ -233,7 +233,7 @@ class Admin_Setting {
 					'N' => 'No',
 				),
 			),
-			'se_page_option_general_end' => array(
+			'se_page_option_general_end'    => array(
 				'type' => 'sectionend',
 				'id'   => 'se_page_option_general',
 			),
@@ -244,16 +244,16 @@ class Admin_Setting {
 			$settings,
 			array(
 				'se_sync_settings_start' => array(
-					'name'     => __( 'Synchronisation settings', 'woocommerce-searchanise' ),
-					'type'     => 'title',
-					'desc'     => '',
-					'id'       => 'se_sync_settings_start',
+					'name' => __( 'Synchronisation settings', 'woocommerce-searchanise' ),
+					'type' => 'title',
+					'desc' => '',
+					'id'   => 'se_sync_settings_start',
 				),
-				'se_sync_mode' => array(
-					'name' => __( 'Sync catalog', 'woocommerce-searchanise' ),
-					'type' => 'select',
-					'desc' => __( 'Select <strong>When catalog updates</strong> to keep track of catalog changes and index them automatically.<br>Select <strong>Periodically via cron</strong> to index catalog changes according to "Cron resync interval" setting.<br>Select <strong>Manually</strong> to index catalog changes manually by clicking <i>FORCE RE-INDEXATION</i> button in the Searchanise control panel(<i>Products → Searchanise</i>).', 'woocommerce-searchanise' ),
-					'id'   => 'se_sync_mode',
+				'se_sync_mode'           => array(
+					'name'    => __( 'Sync catalog', 'woocommerce-searchanise' ),
+					'type'    => 'select',
+					'desc'    => __( 'Select <strong>When catalog updates</strong> to keep track of catalog changes and index them automatically.<br>Select <strong>Periodically via cron</strong> to index catalog changes according to "Cron resync interval" setting.<br>Select <strong>Manually</strong> to index catalog changes manually by clicking <i>FORCE RE-INDEXATION</i> button in the Searchanise control panel(<i>Products → Searchanise</i>).', 'woocommerce-searchanise' ),
+					'id'      => 'se_sync_mode',
 					'options' => array(
 						Api::SYNC_MODE_REALTIME => __( 'When catalog updates', 'woocommerce-searchanise' ),
 						Api::SYNC_MODE_PERIODIC => __( 'Periodically via cron', 'woocommerce-searchanise' ),
@@ -268,10 +268,10 @@ class Admin_Setting {
 				$settings,
 				array(
 					'se_resync_interval' => array(
-						'name' => __( 'Cron resync interval', 'woocommerce-searchanise' ),
-						'type' => 'select',
-						'desc' => __( 'Valid only if "Sync catalog" is set to "Periodically via cron"!', 'woocommerce-searchanise' ),
-						'id'   => 'se_resync_interval',
+						'name'    => __( 'Cron resync interval', 'woocommerce-searchanise' ),
+						'type'    => 'select',
+						'desc'    => __( 'Valid only if "Sync catalog" is set to "Periodically via cron"!', 'woocommerce-searchanise' ),
+						'id'      => 'se_resync_interval',
 						'options' => array(
 							'hourly'     => __( 'Hourly', 'woocommerce-searchanise' ),
 							'twicedaily' => __( 'Twice in day', 'woocommerce-searchanise' ),
@@ -285,7 +285,7 @@ class Admin_Setting {
 		$settings = array_merge(
 			$settings,
 			array(
-				'se_use_direct_image_links' => array(
+				'se_use_direct_image_links'      => array(
 					'name'    => __( 'Use direct images links', 'woocommerce-searchanise' ),
 					'type'    => 'select',
 					'desc'    => __( 'Note: Catalog reindexation will start automatically when value changed.', 'woocommerce-searchanise' ),
@@ -295,7 +295,7 @@ class Admin_Setting {
 						'N' => 'No',
 					),
 				),
-				'se_import_block_posts' => array(
+				'se_import_block_posts'          => array(
 					'name'    => __( 'Import blog posts', 'woocommerce-searchanise' ),
 					'type'    => 'select',
 					'desc'    => __( 'Select "Yes" if you want Searchanise search by block posts as pages.</br>Note: Catalog reindexation will start automatically when value changed..', 'woocommerce-searchanise' ),
@@ -305,34 +305,34 @@ class Admin_Setting {
 						'N' => 'No',
 					),
 				),
-				'se_color_attribute' => array(
+				'se_color_attribute'             => array(
 					'name'    => __( 'Color attribute', 'woocommerce-searchanise' ),
 					'type'    => 'multiselect',
 					'class'   => 'multiselect wc-enhanced-select',
 					'id'      => 'se_color_attribute',
 					'options' => $this->get_option_values( 'product_filters' ),
 				),
-				'se_size_attribute' => array(
+				'se_size_attribute'              => array(
 					'name'    => __( 'Size attribute', 'woocommerce-searchanise' ),
 					'type'    => 'multiselect',
 					'class'   => 'multiselect wc-enhanced-select',
 					'id'      => 'se_size_attribute',
 					'options' => $this->get_option_values( 'product_filters' ),
 				),
-				'se_sync_settings_end' => array(
+				'se_sync_settings_end'           => array(
 					'type' => 'sectionend',
 					'id'   => 'se_sync_settings_end',
 				),
 				'se_advance_sync_settings_start' => array(
-					'name'     => __( 'Advanced synchronisation settings', 'woocommerce-searchanise' ),
-					'type'     => 'title',
-					'desc'     => '',
-					'id'       => 'se_advance_sync_settings_start',
+					'name' => __( 'Advanced synchronisation settings', 'woocommerce-searchanise' ),
+					'type' => 'title',
+					'desc' => '',
+					'id'   => 'se_advance_sync_settings_start',
 				),
 			)
 		);
 
-		$custom_attributes = $this->get_option_values( 'custom_attributes' );
+		$custom_attributes     = $this->get_option_values( 'custom_attributes' );
 		$custom_product_fields = $this->get_option_values( 'custom_product_fields' );
 
 		if ( isset( $_GET['insert_taxonomies'] ) && 'true' === $_GET['insert_taxonomies'] ) {
@@ -386,7 +386,7 @@ class Admin_Setting {
 		$settings = array_merge(
 			$settings,
 			array(
-				'se_excluded_tags' => array(
+				'se_excluded_tags'               => array(
 					'name'    => __( 'Exclude products with these tags', 'woocommerce-searchanise' ),
 					'type'    => 'multiselect',
 					'class'   => 'multiselect wc-enhanced-select',
@@ -394,7 +394,7 @@ class Admin_Setting {
 					'id'      => 'se_excluded_tags',
 					'options' => $this->get_option_values( 'excluded_tags' ),
 				),
-				'se_excluded_pages' => array(
+				'se_excluded_pages'              => array(
 					'name'    => __( 'Exclude these pages', 'woocommerce-searchanise' ),
 					'type'    => 'multiselect',
 					'class'   => 'multiselect wc-enhanced-select',
@@ -402,7 +402,7 @@ class Admin_Setting {
 					'id'      => 'se_excluded_pages',
 					'options' => $this->get_option_values( 'excluded_pages' ),
 				),
-				'se_excluded_categories' => array(
+				'se_excluded_categories'         => array(
 					'name'    => __( 'Exclude these categories', 'woocommerce-searchanise' ),
 					'type'    => 'multiselect',
 					'class'   => 'multiselect wc-enhanced-select',
@@ -411,15 +411,15 @@ class Admin_Setting {
 					'options' => $this->get_option_values( 'excluded_categories' ),
 				),
 
-				'se_advance_sync_settings_end' => array(
+				'se_advance_sync_settings_end'   => array(
 					'type' => 'sectionend',
 					'id'   => 'se_advance_sync_settings_end',
 				),
-				'se_admin_settings_start' => array(
-					'name'     => __( 'Admin settings', 'woocommerce-searchanise' ),
-					'type'     => 'title',
-					'desc'     => '',
-					'id'       => 'se_admin_settings_start',
+				'se_admin_settings_start'        => array(
+					'name' => __( 'Admin settings', 'woocommerce-searchanise' ),
+					'type' => 'title',
+					'desc' => '',
+					'id'   => 'se_admin_settings_start',
 				),
 				'se_show_analytics_on_dashboard' => array(
 					'name'    => __( 'Show Smart Search dashboard widget', 'woocommerce-searchanise' ),
@@ -431,7 +431,7 @@ class Admin_Setting {
 						'N' => 'No',
 					),
 				),
-				'se_admin_settings_end' => array(
+				'se_admin_settings_end'          => array(
 					'type' => 'sectionend',
 					'id'   => 'se_admin_settings_end',
 				),

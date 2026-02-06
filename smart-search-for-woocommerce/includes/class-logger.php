@@ -145,9 +145,9 @@ class Logger {
 			return;
 		}
 
-		$date = gmdate( 'c' );
+		$date    = gmdate( 'c' );
 		$message = "Searchanise: # {$type}: " . print_r( $data, true );
-		$file = $this->log_files[ $type ];
+		$file    = $this->log_files[ $type ];
 
 		if ( ! empty( $this->log_dir ) && file_exists( $this->log_dir ) ) {
 			$full_path = rtrim( $this->log_dir, DIRECTORY_SEPARATOR ) . DIRECTORY_SEPARATOR . $file;

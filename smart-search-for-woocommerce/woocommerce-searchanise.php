@@ -3,12 +3,12 @@
  * Plugin Name: Smart WooCommerce Search by Searchanise
  * Plugin URI: https://searchanise.io/
  * Description: Searchanise shows product previews, relevant categories, pages, and search suggestions as you type.
- * Version: 1.0.17
+ * Version: 1.0.18
  * Author: Searchanise
  * Author URI: https://searchanise.io/
  * License: GPLv3
  * WC requires at least: 3.0.0
- * WC tested up to: 7.7.1
+ * WC tested up to: 10.2.2
  *
  * @package Searchanise
  */

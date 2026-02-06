@@ -63,7 +63,7 @@ class Info {
 
 		if ( ! Api::get_instance()->check_request_private_key() ) {
 			$addon_options = Api::get_instance()->get_addon_options();
-			$options = array(
+			$options       = array(
 				'status'  => $addon_options['addon_status'],
 				'api_key' => $addon_options['api_key'],
 			);
@@ -97,9 +97,9 @@ class Info {
 				fn_se_define( 'WP_DEBUG_DISPLAY', false );
 			}
 
-			$product_ids = $product_id ? $product_id : ( $product_ids ? explode( ',', $product_ids ) : 0 );
+			$product_ids  = $product_id ? $product_id : ( $product_ids ? explode( ',', $product_ids ) : 0 );
 			$category_ids = $category_id ? $category_id : ( $category_ids ? explode( ',', $category_ids ) : 0 );
-			$page_ids = $page_id ? $page_id : ( $page_ids ? explode( ',', $page_ids ) : 0 );
+			$page_ids     = $page_id ? $page_id : ( $page_ids ? explode( ',', $page_ids ) : 0 );
 
 			if ( 'Y' == $resync ) {
 				Api::get_instance()->queue_import( null, false );
@@ -152,36 +152,36 @@ class Info {
 			$options
 		);
 
-		$options['log_dir']                  = SE_LOG_DIR;
-		$options['next_queue']               = Queue::get_instance()->get_next_queue();
-		$options['total_items_in_queue']     = Queue::get_instance()->get_total_items();
-		$options['queue_status']             = Queue::get_instance()->get_queue_status() ? 'Y' : 'N';
+		$options['log_dir']              = SE_LOG_DIR;
+		$options['next_queue']           = Queue::get_instance()->get_next_queue();
+		$options['total_items_in_queue'] = Queue::get_instance()->get_total_items();
+		$options['queue_status']         = Queue::get_instance()->get_queue_status() ? 'Y' : 'N';
 
-		$options['search_input_selector']    = html_entity_decode( Api::get_instance()->get_search_input_selector(), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 );
-		$options['search_enabled']           = Api::get_instance()->get_enabled_searchanise_search() ? 'Y' : 'N';
+		$options['search_input_selector'] = html_entity_decode( Api::get_instance()->get_search_input_selector(), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 );
+		$options['search_enabled']        = Api::get_instance()->get_enabled_searchanise_search() ? 'Y' : 'N';
 
-		$options['sync_mode']                = Api::get_instance()->get_sync_mode();
-		$options['cron_async_enabled']       = Api::get_instance()->check_cron_async_enabled() ? 'Y' : 'N';
-		$options['ajax_async_enabled']       = Api::get_instance()->check_ajax_async_enabled() ? 'Y' : 'N';
+		$options['sync_mode']          = Api::get_instance()->get_sync_mode();
+		$options['cron_async_enabled'] = Api::get_instance()->check_cron_async_enabled() ? 'Y' : 'N';
+		$options['ajax_async_enabled'] = Api::get_instance()->check_ajax_async_enabled() ? 'Y' : 'N';
 
-		$options['max_execution_time']       = ini_get( 'max_execution_time' );
+		$options['max_execution_time'] = ini_get( 'max_execution_time' );
 		@set_time_limit( 0 );
 		$options['max_execution_time_after'] = ini_get( 'max_execution_time' );
 
-		$options['ignore_user_abort']        = ini_get( 'ignore_user_abort' );
+		$options['ignore_user_abort'] = ini_get( 'ignore_user_abort' );
 		@ignore_user_abort( 1 );
-		$options['ignore_user_abort_after']  = ini_get( 'ignore_user_abort_after' );
+		$options['ignore_user_abort_after'] = ini_get( 'ignore_user_abort_after' );
 
 		$options['memory_limit'] = ini_get( 'memory_limit' );
 		wp_raise_memory_limit( 'searchanise_async' );
-		$options['memory_limit_after']       = ini_get( 'memory_limit' );
+		$options['memory_limit_after'] = ini_get( 'memory_limit' );
 
-		list($start, $max) = Async::get_instance()->get_min_max_product_id( true, $lang_code );
-		$options['products']['min'] = $start;
-		$options['products']['max'] = $max;
+		list($start, $max)            = Async::get_instance()->get_min_max_product_id( true, $lang_code );
+		$options['products']['min']   = $start;
+		$options['products']['max']   = $max;
 		$options['products']['count'] = Async::get_instance()->get_products_count( true, $lang_code );
 
-		list($start, $max) = Async::get_instance()->get_min_max_page_id( $lang_code );
+		list($start, $max)       = Async::get_instance()->get_min_max_page_id( $lang_code );
 		$options['pages']['min'] = $start;
 		$options['pages']['max'] = $max;
 

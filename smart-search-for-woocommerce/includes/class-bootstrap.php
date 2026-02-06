@@ -86,8 +86,6 @@ class Bootstrap {
 			$GLOBALS['SearchaniseCli'] = new Cli_Commands();
 
 		} elseif ( ! is_admin() && ! defined( 'DOING_AJAX' ) && ! defined( 'DOING_CRON' ) ) {
-			// Init Searchanise SmartNavigaion.
-			$GLOBALS['SearchaniseNavigation'] = new Navigation( Api::get_instance()->get_locale() );
 			// Init Searchanise Recommendations.
 			$GLOBALS['SearchaniseRecommendations'] = new Recommendations( Api::get_instance()->get_locale() );
 			// Init widgets.
@@ -99,6 +97,8 @@ class Bootstrap {
 					$GLOBALS['searchanise'] = new Search_Results( $currently_language );
 					// Init fulltext search.
 					$GLOBALS['SearchaniseSearch'] = new Fulltext_Search( $currently_language );
+					// Init Searchanise SmartNavigaion.
+					$GLOBALS['SearchaniseNavigation'] = new Navigation( $currently_language );
 				},
 				Api::POSTPONED_LOAD_PRIORITY
 			);
@@ -116,7 +116,7 @@ class Bootstrap {
 	 * @return void
 	 */
 	public static function load_extensions() {
-		$GLOBALS['WoocommerceSearchaniseWeglot'] = new WcWeglot();
+		$GLOBALS['WoocommerceSearchaniseWeglot']  = new WcWeglot();
 		$GLOBALS['WoocommerceSearchaniseJetpack'] = new WcSeJetpack();
 
 		register_uninstall_hook( WP_PLUGIN_DIR . DIRECTORY_SEPARATOR . 'weglot/weglot.php', array( WcWeglot::class, 'uninstallAddon' ) );

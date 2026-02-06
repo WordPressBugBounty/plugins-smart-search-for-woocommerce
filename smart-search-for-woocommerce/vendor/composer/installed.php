@@ -1,9 +1,9 @@
 <?php return array(
     'root' => array(
         'name' => 'searchanise/smart-woocommerce-search',
-        'pretty_version' => '1.0.15',
-        'version' => '1.0.15.0',
-        'reference' => NULL,
+        'pretty_version' => '1.0.17',
+        'version' => '1.0.17.0',
+        'reference' => null,
         'type' => 'wordpress-plugin',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -26,9 +26,9 @@
             ),
         ),
         'searchanise/smart-woocommerce-search' => array(
-            'pretty_version' => '1.0.15',
-            'version' => '1.0.15.0',
-            'reference' => NULL,
+            'pretty_version' => '1.0.17',
+            'version' => '1.0.17.0',
+            'reference' => null,
             'type' => 'wordpress-plugin',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

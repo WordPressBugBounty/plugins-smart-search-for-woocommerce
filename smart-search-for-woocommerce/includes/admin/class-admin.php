@@ -55,7 +55,7 @@ class Admin {
 				'admin_notices',
 				function () {
 					echo '<div class="notice-error notice"><p>'
-						. '<b>' . esc_html( SE_PRODUCT_NAME ) . '</b></p><p>'
+						. '<b>' . esc_html( Api::get_instance()->get_product_name() ) . '</b></p><p>'
 						. wp_kses_data( __( '<a href="https://wordpress.org/plugins/woocommerce">WooCommerce</a> plugin should be enabled to work correctly.', 'woocommerce-searchanise' ) ) . '</p></div>';
 				}
 			);
@@ -67,7 +67,7 @@ class Admin {
 					'admin_notices',
 					function () {
 						echo '<div class="notice-error notice"><p>'
-							. '<b>' . esc_html( SE_PRODUCT_NAME ) . '</b></p><p>'
+							. '<b>' . esc_html( Api::get_instance()->get_product_name() ) . '</b></p><p>'
 							. wp_kses_data( __( 'Plugin was deactivated.', 'woocommerce-searchanise' ) ) . '</p></div>';
 					}
 				);
@@ -117,7 +117,7 @@ class Admin {
 					function () {
 						/* translators: %s: support email */
 						echo '<div class="notice-warning notice"><p>'
-							. '<b>' . esc_html( SE_PRODUCT_NAME ) . '</b></p><p>' . esc_html(
+							. '<b>' . esc_html( Api::get_instance()->get_product_name() ) . '</b></p><p>' . esc_html(
 								sprintf(
 									'Unable to register plugin. Please, contact Searchanise <a href="mailto:%s">%s</a> technical support',
 									SE_SUPPORT_EMAIL,
@@ -218,8 +218,8 @@ class Admin {
 	public function admin_menu() {
 		$admin_page = add_submenu_page(
 			'woocommerce',
-			Api::get_instance()->get_woocommerce_plugin_version() ? SE_PRODUCT_NAME : __( 'Searchanise', 'woocommerce-searchanise' ),
-			Api::get_instance()->get_woocommerce_plugin_version() ? SE_PRODUCT_NAME : __( 'Searchanise', 'woocommerce-searchanise' ),
+			Api::get_instance()->get_woocommerce_plugin_version() ? Api::get_instance()->get_product_name() : __( 'Searchanise', 'woocommerce-searchanise' ),
+			Api::get_instance()->get_woocommerce_plugin_version() ? Api::get_instance()->get_product_name() : __( 'Searchanise', 'woocommerce-searchanise' ),
 			'manage_product_terms',
 			'searchanise',
 			array( $this, 'searchanise_manage' )
@@ -233,7 +233,7 @@ class Admin {
 	 */
 	public function display_admin_notices() {
 		$admin_notices = Api::get_instance()->get_admin_notices();
-		$allowed_tags = array(
+		$allowed_tags  = array(
 			'div'    => array(
 				'class' => array(),
 			),
@@ -249,9 +249,9 @@ class Admin {
 
 		if ( ! empty( $admin_notices ) ) {
 			foreach ( $admin_notices as $notice ) {
-				$class = ! empty( $notice['type'] ) ? 'notice-' . $notice['type'] : '';
+				$class   = ! empty( $notice['type'] ) ? 'notice-' . $notice['type'] : '';
 				$message = $notice['message'];
-				echo wp_kses( "<div class=\"notice {$class} is-dismissible\"><p><b>" . SE_PRODUCT_NAME . "</b></p><p>{$message}</p></div>", $allowed_tags );
+				echo wp_kses( "<div class=\"notice {$class} is-dismissible\"><p><b>" . Api::get_instance()->get_product_name() . "</b></p><p>{$message}</p></div>", $allowed_tags );
 			}
 		}
 
@@ -273,7 +273,7 @@ class Admin {
 				$footer_text = sprintf(
 					/* translators: %s: review link */
 					__( 'If you like %1$s please leave us a %2$s rating. A huge thanks in advance!', 'woocommerce-searchanise' ),
-					sprintf( '<strong>%s</strong>', SE_PRODUCT_NAME ),
+					sprintf( '<strong>%s</strong>', Api::get_instance()->get_product_name() ),
 					'<a href="https://wordpress.org/support/plugin/smart-search-for-woocommerce/reviews?rate=5#new-post" target="_blank" class="se-rating-link" data-rated="' . esc_attr__( 'Thanks :)', 'woocommerce-searchanise' ) . '">&#9733;&#9733;&#9733;&#9733;&#9733;</a>'
 				);
 				wc_enqueue_js(
@@ -287,7 +287,7 @@ class Admin {
 				$footer_text = sprintf(
 					/* translators: %s: product name */
 					__( 'Thank you for using <strong>%s</strong>.', 'woocommerce-searchanise' ),
-					SE_PRODUCT_NAME
+					Api::get_instance()->get_product_name()
 				);
 			}
 		}
@@ -336,33 +336,33 @@ class Admin {
 		Api::get_instance()->check_enviroments();
 
 		$addon_options = Api::get_instance()->get_addon_options();
-		$last_request = Api::get_instance()->get_last_request( $this->lang_code );
-		$last_resync = Api::get_instance()->get_last_resync( $this->lang_code );
-		$service_url = is_ssl() ? str_replace( 'http://', 'https://', SE_SERVICE_URL ) : SE_SERVICE_URL;
+		$last_request  = Api::get_instance()->get_last_request( $this->lang_code );
+		$last_resync   = Api::get_instance()->get_last_resync( $this->lang_code );
+		$service_url   = is_ssl() ? str_replace( 'http://', 'https://', SE_SERVICE_URL ) : SE_SERVICE_URL;
 
 		$se_admin_widgets_file_path = SE_BASE_DIR . '/assets/js/se-admin-widgets.js';
-		$se_options = array(
-			'version'               => SE_PLUGIN_VERSION,
-			'status'                => 'enabled',
-			'platform'              => SE_PLATFORM,
-			'platform_edition'      => ! empty( $addon_options['woocommerce'] ) ? $addon_options['woocommerce']['Version'] : '',
-			'platform_version'      => $wp_version,
-			'host'                  => $service_url,
-			'private_key'           => Api::get_instance()->get_private_key( $this->lang_code ),
-			'parent_private_key'    => Api::get_instance()->get_parent_private_key(),
-			'connect_link'          => Api::get_instance()->get_admin_url( 'signup' ),
-			're_sync_link'          => Api::get_instance()->get_admin_url( 'reindex' ),
-			'last_request'          => Api::get_instance()->format_date( $last_request ),
-			'last_resync'           => Api::get_instance()->format_date( $last_resync ),
-			'lang_code'             => $this->lang_code,
-			'name'                  => Api::get_instance()->get_store_name( $this->lang_code ),
-			'symbol'                => get_woocommerce_currency_symbol(),
-			'decimals'              => wc_get_price_decimals(),
-			'decimals_separator'    => wc_get_price_decimal_separator(),
-			'thousands_separator'   => wc_get_price_thousand_separator(),
-			'api_key'               => Api::get_instance()->get_api_key( $this->lang_code ),
-			'export_status'         => Api::get_instance()->get_export_status( $this->lang_code ),
-			's_engines'             => array_values( Api::get_instance()->get_engines() ),
+		$se_options                 = array(
+			'version'             => SE_PLUGIN_VERSION,
+			'status'              => 'enabled',
+			'platform'            => SE_PLATFORM,
+			'platform_edition'    => ! empty( $addon_options['woocommerce'] ) ? $addon_options['woocommerce']['Version'] : '',
+			'platform_version'    => $wp_version,
+			'host'                => $service_url,
+			'private_key'         => Api::get_instance()->get_private_key( $this->lang_code ),
+			'parent_private_key'  => Api::get_instance()->get_parent_private_key(),
+			'connect_link'        => Api::get_instance()->get_admin_url( 'signup' ),
+			're_sync_link'        => Api::get_instance()->get_admin_url( 'reindex' ),
+			'last_request'        => Api::get_instance()->format_date( $last_request ),
+			'last_resync'         => Api::get_instance()->format_date( $last_resync ),
+			'lang_code'           => $this->lang_code,
+			'name'                => Api::get_instance()->get_store_name( $this->lang_code ),
+			'symbol'              => get_woocommerce_currency_symbol(),
+			'decimals'            => wc_get_price_decimals(),
+			'decimals_separator'  => wc_get_price_decimal_separator(),
+			'thousands_separator' => wc_get_price_thousand_separator(),
+			'api_key'             => Api::get_instance()->get_api_key( $this->lang_code ),
+			'export_status'       => Api::get_instance()->get_export_status( $this->lang_code ),
+			's_engines'           => array_values( Api::get_instance()->get_engines() ),
 		);
 
 		/**
@@ -406,7 +406,7 @@ class Admin {
 
 			if ( method_exists( $this, $action ) ) {
 				call_user_func_array( array( $this, $action ), array() );
-				wp_redirect( Api::get_instance()->get_admin_url() );
+				wp_safe_redirect( Api::get_instance()->get_admin_url() );
 			}
 		}
 
@@ -414,7 +414,7 @@ class Admin {
 		wp_enqueue_script( 'se_link' );
 
 		echo '<div class="wrap"><h1>'
-			. esc_html( SE_PRODUCT_NAME )
+			. esc_html( Api::get_instance()->get_product_name() )
 			. '</h1><div class="snize" id="snize_container"></div></div>';
 
 		return $this;
@@ -475,7 +475,7 @@ class Admin {
 		$admin_setting->init();
 
 		if ( isset( $_SERVER['REQUEST_METHOD'] ) && 'POST' == $_SERVER['REQUEST_METHOD'] ) {
-			$post = filter_input_array( INPUT_POST, FILTER_SANITIZE_SPECIAL_CHARS );
+			$post        = filter_input_array( INPUT_POST, FILTER_SANITIZE_SPECIAL_CHARS );
 			$se_settings = isset( $post['se_search_input_selector'] ) ? $post : array();
 
 			if ( ! empty( $se_settings ) ) {
@@ -483,7 +483,7 @@ class Admin {
 
 				foreach ( $post as $name => $val ) {
 					if ( $this->need_setting_reindexation( $name ) ) {
-						$old_value = Api::get_instance()->get_system_setting( $name );
+						$old_value          = Api::get_instance()->get_system_setting( $name );
 						$need_reindexation |= $old_value != $val;
 					}
 
@@ -641,8 +641,10 @@ class Admin {
 
 		if ( is_array( $store_data ) ) {
 			$value_counts = array_count_values( $store_data );
+
+			return isset( $value_counts['Y'] ) ? $value_counts['Y'] : 0;
 		}
 
-		return isset( $value_counts['Y'] ) ? $value_counts['Y'] : 0;
+		return 0;
 	}
 }

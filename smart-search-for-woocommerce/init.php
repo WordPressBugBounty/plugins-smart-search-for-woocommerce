@@ -26,7 +26,7 @@ function fn_se_define_constants() {
 	fn_se_define( 'SE_PAGES_PER_PASS', 100 );
 
 	fn_se_define( 'SE_VERSION', '1.3' );
-	fn_se_define( 'SE_PLUGIN_VERSION', '1.0.17' );
+	fn_se_define( 'SE_PLUGIN_VERSION', '1.0.18' );
 	fn_se_define( 'SE_MEMORY_LIMIT', '512M' );
 	fn_se_define( 'SE_MAX_ERROR_COUNT', 3 );
 	fn_se_define( 'SE_MAX_PROCESSING_TIME', 720 );
@@ -42,9 +42,6 @@ function fn_se_define_constants() {
 	fn_se_define( 'SE_LOG_DIR', $upload_dir['basedir'] . DIRECTORY_SEPARATOR . 'se_logs' );
 	fn_se_define( 'SE_TEMPLATES_PATH', __DIR__ . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR );
 	fn_se_define( 'SE_VENDOR_PATH', __DIR__ . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR );
-
-	$data = get_plugin_data( __DIR__ . DIRECTORY_SEPARATOR . 'woocommerce-searchanise.php' );
-	fn_se_define( 'SE_PRODUCT_NAME', $data['Name'] );
 }
 
 /**

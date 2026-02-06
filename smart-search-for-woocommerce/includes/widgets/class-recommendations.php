@@ -96,8 +96,8 @@ class Recommendations {
 				$this->wc_content,
 				array(
 					'div' => array(
-						'class' => array(),
-						'data-page-type' => array(),
+						'class'            => array(),
+						'data-page-type'   => array(),
 						'data-product-ids' => array(),
 					),
 				)
@@ -129,7 +129,7 @@ class Recommendations {
 				$this->wc_content,
 				array(
 					'div' => array(
-						'class' => array(),
+						'class'          => array(),
 						'data-page-type' => array(),
 					),
 				)
@@ -195,9 +195,9 @@ class Recommendations {
 	 * @return string
 	 */
 	private function get_block_content( $page_type, array $classes = array(), array $product_ids = array() ) {
-		$classes[] = get_template();
+		$classes[]       = get_template();
 		$product_ids_str = ! empty( $product_ids ) ? ( 'data-product-ids = "' . implode( ',', $product_ids ) . '"' ) : '';
-		$classes_str = implode( ' ', $classes );
+		$classes_str     = implode( ' ', $classes );
 
 		return "<div class=\"snize-recommendation-wrapper {$classes_str}\" data-page-type = \"{$page_type}\" {$product_ids_str}></div>";
 	}

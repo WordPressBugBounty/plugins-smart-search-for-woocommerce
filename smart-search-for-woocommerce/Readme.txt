@@ -4,10 +4,10 @@ Contributors: searchanise
 Donate link: https://searchanise.io/woo-commerce/
 Tags: search, woocommerce search, product search, product filter, smart search, woocommerce filter, search results, search engine, live search, search plugin, advanced search, site search
 Requires at least: 4.0
-Tested up to: 6.7.2
+Tested up to: 6.8.3
 WC requires at least: 3.0.0
-WC tested up to: 9.7.1
-Stable tag: 1.0.17
+WC tested up to: 10.2.2
+Stable tag: 1.0.18
 Requires PHP: 5.6
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -172,6 +172,11 @@ Searchanise replaces the built-in search and processes all search queries remote
 5. Leverage analytics to avoid giving no results to your customers.
 
 == Changelog ==
+
+= 1.0.18 =
+
+* [!] - PHP error "Function _load_textdomain_just_in_time was called incorrectly" sometimes occurs. Fixed.
+* [!] - In some cases Fix translations were not translated by Weglot integration. Fixed.
 
 = 1.0.17 =
 

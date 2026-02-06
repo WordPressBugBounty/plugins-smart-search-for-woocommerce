@@ -1,36 +1,40 @@
-# Copyright (C) 2023 Searchanise
+# Copyright (C) 2025 Searchanise
 # This file is distributed under the GPLv3.
 msgid ""
 msgstr ""
-"Project-Id-Version: Smart WooCommerce Search by Searchanise 1.0.17\n"
+"Project-Id-Version: Smart WooCommerce Search by Searchanise 1.0.18\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/searchanise_woocommerce\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2023-08-11T07:59:43+00:00\n"
+"POT-Creation-Date: 2025-03-24T10:59:30+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"X-Generator: WP-CLI 2.8.1\n"
+"X-Generator: WP-CLI 2.10.0\n"
 "X-Domain: woocommerce-searchanise\n"
 
 #. Plugin Name of the plugin
+#: woocommerce-searchanise.php
 msgid "Smart WooCommerce Search by Searchanise"
 msgstr ""
 
 #. Plugin URI of the plugin
 #. Author URI of the plugin
+#: woocommerce-searchanise.php
 msgid "https://searchanise.io/"
 msgstr ""
 
 #. Description of the plugin
+#: woocommerce-searchanise.php
 msgid "Searchanise shows product previews, relevant categories, pages, and search suggestions as you type."
 msgstr ""
 
 #. Author of the plugin
+#: woocommerce-searchanise.php
 #: includes/admin/class-admin-setting.php:164
-#: includes/admin/class-admin.php:196
-#: includes/admin/class-admin.php:197
+#: includes/admin/class-admin.php:250
+#: includes/admin/class-admin.php:251
 msgid "Searchanise"
 msgstr ""
 
@@ -216,151 +220,164 @@ msgid "Advanced synchronisation settings"
 msgstr ""
 
 #: includes/admin/class-admin-setting.php:343
-msgid "Custom taxonomies"
+msgid "Custom taxonomies for Indexation"
 msgstr ""
 
 #: includes/admin/class-admin-setting.php:346
-msgid "Select custom product taxonomies to import. Selected taxonomies data will be imported and new filters will be created for them.</br>Note: Catalog reindexation will start automatically when value changed."
+msgid "Insert the slug name of the custom product taxonomies separated by commas.</br>New filters will be created for them."
 msgstr ""
 
 #: includes/admin/class-admin-setting.php:359
+msgid "Custom taxonomies"
+msgstr ""
+
+#: includes/admin/class-admin-setting.php:362
+msgid "Select custom product taxonomies to import. Selected taxonomies data will be imported and new filters will be created for them.</br>Note: Catalog reindexation will start automatically when value changed."
+msgstr ""
+
+#: includes/admin/class-admin-setting.php:375
 msgid "Custom product meta fields"
 msgstr ""
 
-#: includes/admin/class-admin-setting.php:374
+#: includes/admin/class-admin-setting.php:390
 msgid "Exclude products with these tags"
 msgstr ""
 
-#: includes/admin/class-admin-setting.php:382
+#: includes/admin/class-admin-setting.php:398
 msgid "Exclude these pages"
 msgstr ""
 
-#: includes/admin/class-admin-setting.php:385
+#: includes/admin/class-admin-setting.php:401
 msgid "These pages will be excluded from indexation and will not be displayed in search results.<br />Note: Catalog reindexation will start automatically when value changed."
 msgstr ""
 
-#: includes/admin/class-admin-setting.php:390
+#: includes/admin/class-admin-setting.php:406
 msgid "Exclude these categories"
 msgstr ""
 
-#: includes/admin/class-admin-setting.php:393
+#: includes/admin/class-admin-setting.php:409
 msgid "These categories will be excluded from indexation and will not be displayed in search results.<br />Note: Catalog reindexation will start automatically when value changed."
 msgstr ""
 
-#: includes/admin/class-admin-setting.php:403
+#: includes/admin/class-admin-setting.php:419
 msgid "Admin settings"
 msgstr ""
 
-#: includes/admin/class-admin-setting.php:409
+#: includes/admin/class-admin-setting.php:425
 msgid "Show Smart Search dashboard widget"
 msgstr ""
 
-#: includes/admin/class-admin-setting.php:411
+#: includes/admin/class-admin-setting.php:427
 msgid "Select \"Yes\" to display \"Smart Search Analytics\" widget on dashboard page."
 msgstr ""
 
-#: includes/admin/class-admin.php:50
+#. translators: %s is a placeholder for the subscriptions URL
+#: includes/admin/class-admin.php:73
+msgid "The Searchanise app is not working now because your subscription is not active. Please <a href=\" %s\">upgrade your subscription</a> to continue enjoying Searchanise in full."
+msgstr ""
+
+#: includes/admin/class-admin.php:88
 msgid "<a href=\"https://wordpress.org/plugins/woocommerce\">WooCommerce</a> plugin should be enabled to work correctly."
 msgstr ""
 
-#: includes/admin/class-admin.php:62
+#: includes/admin/class-admin.php:100
 msgid "Plugin was deactivated."
 msgstr ""
 
 #. translators: %s: admin panel
-#: includes/admin/class-admin.php:115
+#: includes/admin/class-admin.php:168
 msgid "Plugin was successfully updated. Catalog indexation in process. <a href=\"%s\">Admin Panel</a>."
 msgstr ""
 
 #. translators: %s: admin panel
-#: includes/admin/class-admin.php:123
+#: includes/admin/class-admin.php:176
 msgid "In the new version 1.0.12 of the plugin, the settings moved from <b>Settings → Searchanise</b> to the <b><a href=\"%1$s\">WooCommerce → Settings → Searchanise</a></b> and <br />admin panel moved from <b>Products → Searchanise</b> to <b><a href=\"%2$s\"> Woocommerce → Searchanise</a></b>."
 msgstr ""
 
 #. translators: %s: admin panel
-#: includes/admin/class-admin.php:134
+#: includes/admin/class-admin.php:187
 msgid "Plugin was successfully installed. Catalog indexation in process. <a href=\"%s\">Admin Panel</a>."
 msgstr ""
 
 #. translators: %s: admin panel
-#: includes/admin/class-admin.php:141
+#: includes/admin/class-admin.php:194
 msgid "Plugin was successfully activated. Catalog indexation in process. <a href=\"%s\">Admin Panel</a>."
 msgstr ""
 
 #. translators: %s: support email
-#: includes/admin/class-admin.php:156
+#: includes/admin/class-admin.php:209
 msgid "Something is wrong in plugin registration. Please contact Searchanise <a href=\"mailto:%1$s\">%2$s</a> technical support"
 msgstr ""
 
-#: includes/admin/class-admin.php:183
+#: includes/admin/class-admin.php:237
 msgid "Admin Panel"
 msgstr ""
 
-#: includes/admin/class-admin.php:184
+#: includes/admin/class-admin.php:238
 msgid "Settings"
 msgstr ""
 
 #. translators: %s: review link
-#: includes/admin/class-admin.php:250
+#: includes/admin/class-admin.php:304
 msgid "If you like %1$s please leave us a %2$s rating. A huge thanks in advance!"
 msgstr ""
 
-#: includes/admin/class-admin.php:252
+#: includes/admin/class-admin.php:306
 msgid "Thanks :)"
 msgstr ""
 
 #. translators: %s: product name
-#: includes/admin/class-admin.php:264
+#: includes/admin/class-admin.php:318
 msgid "Thank you for using <strong>%s</strong>."
 msgstr ""
 
-#: includes/admin/class-admin.php:374
+#: includes/admin/class-admin.php:428
 msgid "Access denied."
 msgstr ""
 
-#: includes/class-fulltext-search.php:193
+#: includes/class-fulltext-search.php:380
 msgid "Did you mean:"
 msgstr ""
 
 #. translators: version
-#: includes/class-hooks.php:154
+#: includes/class-hooks.php:155
 msgid "Plugin is compatible with Wordpress version %1$s or higher. Plugin may work incorrectly. Please upgrade your Wordpress to %2$s version or highter"
 msgstr ""
 
 #. translators: version
-#: includes/class-hooks.php:162
+#: includes/class-hooks.php:163
 msgid "The plugin is compatible with WooCommerce version %1$s or higher. The plugin may work incorrectly. Please upgrade your WooCommerce to %2$s version or highter"
 msgstr ""
 
 #. translators: link
-#: includes/class-hooks.php:930
+#: includes/class-hooks.php:967
 msgid "Catalog should be re-indexed to display correct data in storefront. Please <a href=\"%s\">force re-indexation</a>"
 msgstr ""
 
 #. translators: title
-#: includes/class-hooks.php:1025
+#: includes/class-hooks.php:1062
 msgid "Page \"%s\" is used to display Searchanise search results and cannot be deleted. Page was restored from trash."
 msgstr ""
 
 #. translators: service url
-#: includes/helpers/class-api.php:1190
+#: includes/helpers/class-api.php:1213
 msgid "Searchanise: There is no connection to Searchanise server! For Searchanise to work properly, the store server must be able to access %s. Please contact Searchanise <a href=\"mailto: feedback@searchanise.com\">feedback@searchanise.com</a> technical support or your system administrator."
 msgstr ""
 
-#: includes/helpers/class-api.php:1194
+#: includes/helpers/class-api.php:1217
 msgid "Searchanise: We found an issue with the export of changes in your store catalog. To resolve the issue please contact Searchanise <a href=\"mailto:feedback@searchanise.com\">feedback@searchanise.com</a> technical support."
 msgstr ""
 
-#: includes/helpers/class-api.php:1453
+#: includes/helpers/class-api.php:1476
 msgid "Empty private key"
 msgstr ""
 
-#: includes/helpers/class-api.php:1646
+#: includes/helpers/class-api.php:1669
 msgid "The product catalog is queued for syncing"
 msgstr ""
 
 #. translators: admin url
-#: includes/helpers/class-api.php:1670
+#: includes/helpers/class-api.php:1693
 msgid "Catalog indexation is complete. Use <a href=\"%s\">Admin Panel</a> for configuration."
 msgstr ""
 
@@ -428,16 +445,16 @@ msgstr ""
 msgid "Meta keywords"
 msgstr ""
 
-#: includes/queue/class-async.php:2866
+#: includes/queue/class-async.php:2869
 msgid "Searchanise module not enabled"
 msgstr ""
 
-#: includes/queue/class-async.php:2872
+#: includes/queue/class-async.php:2875
 msgid "Invalid private key"
 msgstr ""
 
 #. translators: status
-#: includes/queue/class-async.php:2890
+#: includes/queue/class-async.php:2893
 msgid "Searchanise status sync: %s"
 msgstr ""
 

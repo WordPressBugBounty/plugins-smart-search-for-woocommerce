@@ -59,12 +59,12 @@ class Fulltext_Search extends Abstract_Extension {
 	);
 
 	const RATING_MAP = array(
-		'fivestar' => 5,
-		'fourstar' => 4,
+		'fivestar'  => 5,
+		'fourstar'  => 4,
 		'threestar' => 3,
-		'twostar' => 2,
-		'onestar' => 1,
-		'nostar' => 0,
+		'twostar'   => 2,
+		'onestar'   => 1,
+		'nostar'    => 0,
 	);
 
 	/**
@@ -190,7 +190,7 @@ class Fulltext_Search extends Abstract_Extension {
 	 * @param \WP_REST_Request  $request Request used to generate the response.
 	 */
 	public function restPostDispatch( \WP_HTTP_Response $result, \WP_REST_Server $server, \WP_REST_Request $request ) {
-		$api_key = Api::get_instance()->get_api_key( $this->lang_code );
+		$api_key        = Api::get_instance()->get_api_key( $this->lang_code );
 		$last_cache_key = md5(
 			wp_json_encode(
 				array(
@@ -201,8 +201,8 @@ class Fulltext_Search extends Abstract_Extension {
 		);
 
 		$last_result = get_transient( self::CACHE_LAST_PREFIX . $last_cache_key );
-		$route = $request->get_route();
-		$data = $result->get_data();
+		$route       = $request->get_route();
+		$data        = $result->get_data();
 
 		if ( $last_result && preg_match( '/\/products\/collection-data/', $route, $matches ) ) {
 			foreach ( $last_result['facets'] as $facet ) {
@@ -275,7 +275,7 @@ class Fulltext_Search extends Abstract_Extension {
 									foreach ( $data['attribute_counts'] as &$attribute_count ) {
 										if ( $attribute_count->term == $term->term_id ) {
 											$attribute_count->count = $facet_bucket['count'];
-											$found = true;
+											$found                  = true;
 											break;
 										}
 									}
@@ -328,7 +328,7 @@ class Fulltext_Search extends Abstract_Extension {
 						foreach ( $facet['buckets'] as $facet_bucket ) {
 							if ( $facet_bucket['value'] == $attr['slug'] ) {
 								$attr['count'] = $facet_bucket['count'];
-								$found = true;
+								$found         = true;
 							}
 						}
 
@@ -375,17 +375,17 @@ class Fulltext_Search extends Abstract_Extension {
 
 			if ( ! empty( $sugs ) ) {
 				$suggestions_max_results = Api::get_instance()->get_suggestions_max_results();
-				$search_params = $this->getSearchParams();
-				$text_find = $search_params['q'];
-				$message = __( 'Did you mean:', 'woocommerce-searchanise' );
-				$links = array();
-				$sug_count = 0;
+				$search_params           = $this->getSearchParams();
+				$text_find               = $search_params['q'];
+				$message                 = __( 'Did you mean:', 'woocommerce-searchanise' );
+				$links                   = array();
+				$sug_count               = 0;
 
 				foreach ( $sugs as $sug ) {
 					if ( ! empty( $sug ) && $sug != $text_find ) {
-						$url = $this->getSuggestionLink( $sug, $this->lang_code );
+						$url     = $this->getSuggestionLink( $sug, $this->lang_code );
 						$links[] = "<a href='{$url}'>{$sug}</a>";
-						$sug_count++;
+						++$sug_count;
 					}
 
 					if ( $sug_count >= $suggestions_max_results ) {
@@ -562,7 +562,7 @@ class Fulltext_Search extends Abstract_Extension {
 		global $wpdb;
 
 		if ( $this->checkSearchResults() && $this->isSearchRequest() ) {
-			$search_params = $this->getSearchParams();
+			$search_params   = $this->getSearchParams();
 			$product_ids_str = implode( ',', $this->getProductIds() );
 
 			if ( empty( $product_ids_str ) ) {
@@ -614,7 +614,7 @@ class Fulltext_Search extends Abstract_Extension {
 		} elseif ( Api::get_instance()->is_navigation_enabled( $this->lang_code ) && $wp_query->is_tax( 'product_cat' ) ) {
 			$taxonomies = wc_get_attribute_taxonomies();
 			foreach ( $taxonomies as $taxonomy ) {
-				$taxonomy_name = wc_attribute_taxonomy_name( $taxonomy->attribute_name );
+				$taxonomy_name            = wc_attribute_taxonomy_name( $taxonomy->attribute_name );
 				$fn_wc_layered_nav_counts = function ( $pre_transient, $transient ) {
 					if ( empty( $this->last_query_hash ) ) {
 						return $pre_transient;
@@ -702,12 +702,12 @@ class Fulltext_Search extends Abstract_Extension {
 
 		// WooCommerce allow to ordering by more then one attribute
 		// So, process only the first one.
-		list($sort_by) = explode( ' ', $sort_by );
+		list($sort_by)       = explode( ' ', $sort_by );
 		$sort_order_override = false;
 
 		if ( preg_match( '/(.*)[-_](desc|asc)$/', $sort_by, $matches ) ) {
-			$sort_by = $matches[1];
-			$sort_order = $matches[2];
+			$sort_by             = $matches[1];
+			$sort_order          = $matches[2];
 			$sort_order_override = true;
 		}
 
@@ -762,8 +762,8 @@ class Fulltext_Search extends Abstract_Extension {
 
 		$params = array();
 
-		$params['q'] = '';
-		$params['restrictBy']['status'] = 'publish';
+		$params['q']                        = '';
+		$params['restrictBy']['status']     = 'publish';
 		$params['restrictBy']['visibility'] = 'visible|catalog|search';
 		if ( 'yes' === get_option( 'woocommerce_hide_out_of_stock_items' ) ) {
 			$params['restrictBy']['is_in_stock'] = 'Y';
@@ -802,10 +802,10 @@ class Fulltext_Search extends Abstract_Extension {
 		list($start_index, $max_results) = $this->getLimits( $query_vars );
 
 		// Assign vars.
-		$params['maxResults'] = (int) $max_results;
-		$params['startIndex'] = (int) $start_index;
-		$params['sortBy']     = $sort_by;
-		$params['sortOrder']  = $sort_order;
+		$params['maxResults']             = (int) $max_results;
+		$params['startIndex']             = (int) $start_index;
+		$params['sortBy']                 = $sort_by;
+		$params['sortOrder']              = $sort_order;
 		$params['recentlyViewedProducts'] = Api::get_instance()->get_recently_viewed_product_ids();
 
 		// Prepare facets.
@@ -813,21 +813,21 @@ class Fulltext_Search extends Abstract_Extension {
 
 		// There is no correct WooCommerce hooks for attribute counts
 		// But WooCommerce use cache to store the attributes count
-		// So, we have to use Wordpress cache hooks to replace cache results.
+		// So, we have to use WordPress cache hooks to replace cache results.
 		$taxonomies = wc_get_attribute_taxonomies();
 		foreach ( $taxonomies as $taxonomy ) {
-			$taxonomy_name = wc_attribute_taxonomy_name( $taxonomy->attribute_name );
-			$that = $this;
+			$taxonomy_name            = wc_attribute_taxonomy_name( $taxonomy->attribute_name );
+			$that                     = $this;
 			$fn_wc_layered_nav_counts = function ( $pre_transient, $transient ) use ( $taxonomy, $that ) {
 				if ( empty( $this->last_query_hash ) || ! $that->checkSearchResults() ) {
 					return $pre_transient;
 				}
 
 				$transient_counts = array();
-				$counts = $that->getCountAttribute( $taxonomy->attribute_name );
-				$terms = get_terms(
+				$counts           = $that->getCountAttribute( $taxonomy->attribute_name );
+				$terms            = get_terms(
 					array(
-						'taxonomy' => wc_attribute_taxonomy_name( $taxonomy->attribute_name ),
+						'taxonomy'   => wc_attribute_taxonomy_name( $taxonomy->attribute_name ),
 						'hide_empty' => true,
 					)
 				);
@@ -1006,10 +1006,10 @@ class Fulltext_Search extends Abstract_Extension {
 	 * @return array
 	 */
 	private function getLimits( $query_vars ) {
-		$max_results = ! empty( $query_vars['posts_per_page'] ) ? (int) $query_vars['posts_per_page'] : (int) get_option( 'posts_per_page' );
-		$start_index = 0;
+		$max_results  = ! empty( $query_vars['posts_per_page'] ) ? (int) $query_vars['posts_per_page'] : (int) get_option( 'posts_per_page' );
+		$start_index  = 0;
 		$current_page = ! empty( $query_vars['paged'] ) ? (int) abs( $query_vars['paged'] ) : 1;
-		$start_index = $current_page > 1 ? ( $current_page - 1 ) * $max_results : 0;
+		$start_index  = $current_page > 1 ? ( $current_page - 1 ) * $max_results : 0;
 
 		/**
 		 * Filters search limits
@@ -1031,11 +1031,11 @@ class Fulltext_Search extends Abstract_Extension {
 		$sort_by    = self::DEFAULT_SORT_BY;
 		$sort_order = self::DEFAULT_SORT_ORDER;
 
-		$wc_orderby = get_option( 'woocommerce_default_catalog_orderby' );
+		$wc_orderby       = get_option( 'woocommerce_default_catalog_orderby' );
 		list($wc_orderby) = explode( ' ', $wc_orderby );
 		if ( ! empty( $wc_orderby ) ) {
 			if ( preg_match( '/(.*)[-_](desc|asc)$/', $wc_orderby, $matches ) ) {
-				$sort_by = $matches[1];
+				$sort_by    = $matches[1];
 				$sort_order = $matches[2];
 
 			} else {
@@ -1066,7 +1066,7 @@ class Fulltext_Search extends Abstract_Extension {
 	private function sendSearchAndRequest( array $params, $lang_code ) {
 		$this->setSearchResult();
 		$this->last_query_hash = '';
-		$api_key = Api::get_instance()->get_api_key( $lang_code );
+		$api_key               = Api::get_instance()->get_api_key( $lang_code );
 
 		if ( empty( $api_key ) ) {
 			return false;
@@ -1093,7 +1093,7 @@ class Fulltext_Search extends Abstract_Extension {
 		}
 
 		// Check if results cached.
-		$cache_key = md5(
+		$cache_key      = md5(
 			wp_json_encode(
 				array_merge(
 					$params,
@@ -1128,7 +1128,7 @@ class Fulltext_Search extends Abstract_Extension {
 						'headers' => array(
 							'Content-Type' => 'application/x-www-form-urlencoded;charset=UTF-8',
 						),
-						'body' => $params,
+						'body'    => $params,
 					)
 				);
 
@@ -1218,10 +1218,10 @@ class Fulltext_Search extends Abstract_Extension {
 		$result['facets'][0]['buckets'][0] = array(
 			'value' => '0.0000,95.0000',
 			'title' => '0.0000,95.0000',
-			'from' => 0,
-			'left' => 0,
+			'from'  => 0,
+			'left'  => 0,
 			'right' => 95.00,
-			'to' => 95.00,
+			'to'    => 95.00,
 			'count' => 18,
 		);
 
@@ -1240,7 +1240,7 @@ class Fulltext_Search extends Abstract_Extension {
 				remove_action( 'woocommerce_no_products_found', 'wc_no_products_found' );
 
 				// New no product message.
-				$message = __( 'No products were found matching your selection.', 'woocommerce' );
+				$message      = __( 'No products were found matching your selection.', 'woocommerce' );
 				$did_you_mean = $this->getDidYouMeanText();
 
 				echo '<p class="woocommerce-info"><span>' . esc_html( $message ) . ' ' . wp_kses( $did_you_mean, array( 'a' => array( 'href' => array() ) ) ) . '</span></p>';
@@ -1286,7 +1286,7 @@ class Fulltext_Search extends Abstract_Extension {
 				$enabled = false;
 
 			} else {
-				$count = get_comments(
+				$count   = get_comments(
 					array(
 						'count'      => true,
 						'post_type'  => 'product',
@@ -1468,7 +1468,7 @@ class Fulltext_Search extends Abstract_Extension {
 
 		if ( ! $this->checkAttributeCount( $filter ) ) {
 			$vals = array();
-			$res = $this->getSearchResult();
+			$res  = $this->getSearchResult();
 
 			if ( ! empty( $res['facets'] ) ) {
 				foreach ( $res['facets'] as $facet ) {

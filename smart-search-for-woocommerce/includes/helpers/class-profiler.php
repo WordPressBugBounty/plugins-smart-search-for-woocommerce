@@ -34,9 +34,9 @@ class Profiler {
 	 * @param string $block_name Block name.
 	 */
 	public static function start_block( $block_name ) {
-		self::$blocks[ $block_name ] = array();
-		self::$blocks[ $block_name ]['start']['time'] = microtime( true );
-		self::$blocks[ $block_name ]['start']['memory_usage'] = memory_get_usage();
+		self::$blocks[ $block_name ]                               = array();
+		self::$blocks[ $block_name ]['start']['time']              = microtime( true );
+		self::$blocks[ $block_name ]['start']['memory_usage']      = memory_get_usage();
 		self::$blocks[ $block_name ]['start']['memory_peak_usage'] = memory_get_peak_usage();
 	}
 
@@ -47,8 +47,8 @@ class Profiler {
 	 */
 	public static function end_block( $block_name ) {
 		if ( ! empty( self::$blocks[ $block_name ]['start'] ) ) {
-			self::$blocks[ $block_name ]['end']['time'] = microtime( true );
-			self::$blocks[ $block_name ]['end']['memory_usage'] = memory_get_usage();
+			self::$blocks[ $block_name ]['end']['time']              = microtime( true );
+			self::$blocks[ $block_name ]['end']['memory_usage']      = memory_get_usage();
 			self::$blocks[ $block_name ]['end']['memory_peak_usage'] = memory_get_peak_usage();
 		}
 	}
@@ -64,8 +64,8 @@ class Profiler {
 		$info = array();
 
 		if ( ! empty( self::$blocks[ $block_name ] ) && ! empty( self::$blocks[ $block_name ]['end'] ) ) {
-			$info['time'] = self::$blocks[ $block_name ]['end']['time'] - self::$blocks[ $block_name ]['start']['time'];
-			$info['memory_increased'] = self::nice_file_size( self::$blocks[ $block_name ]['end']['memory_usage'] - self::$blocks[ $block_name ]['start']['memory_usage'] );
+			$info['time']                  = self::$blocks[ $block_name ]['end']['time'] - self::$blocks[ $block_name ]['start']['time'];
+			$info['memory_increased']      = self::nice_file_size( self::$blocks[ $block_name ]['end']['memory_usage'] - self::$blocks[ $block_name ]['start']['memory_usage'] );
 			$info['memory_peak_increased'] = self::nice_file_size( self::$blocks[ $block_name ]['end']['memory_peak_usage'] - self::$blocks[ $block_name ]['start']['memory_peak_usage'] );
 		}
 
@@ -115,5 +115,7 @@ class Profiler {
 				return @round( $bytes / pow( 1000, ( $i ) ), 2 ) . ' ' . ( isset( $unit[ $i ] ) ? $unit[ $i ] : 'B' );
 			}
 		}
+
+		return '0';
 	}
 }

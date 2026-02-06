@@ -39,7 +39,9 @@ abstract class Abstract_Extension {
 
 				if ( method_exists( $this, $fn ) ) {
 					$reflect_method = new \ReflectionMethod( $this, $fn );
-					add_filter( $filter, array( $this, $fn ), $priority, $reflect_method->getNumberOfParameters() );
+					if ( ! has_filter( $filter ) ) {
+						add_filter( $filter, array( $this, $fn ), $priority, $reflect_method->getNumberOfParameters() );
+					}
 				}
 			}
 		}

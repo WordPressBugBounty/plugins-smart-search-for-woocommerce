@@ -14,14 +14,14 @@ defined( 'ABSPATH' ) || exit;
  */
 class Queue {
 
-	const NO_DATA               = 'N';
-	const PHRASE                = 'phrase';
+	const NO_DATA = 'N';
+	const PHRASE  = 'phrase';
 
 	// Queue actions.
-	const UPDATE_PAGES          = 'update_pages';
-	const UPDATE_PRODUCTS       = 'update_products';
-	const UPDATE_ATTRIBUTES     = 'update_attributes';
-	const UPDATE_CATEGORIES     = 'update_categories';
+	const UPDATE_PAGES      = 'update_pages';
+	const UPDATE_PRODUCTS   = 'update_products';
+	const UPDATE_ATTRIBUTES = 'update_attributes';
+	const UPDATE_CATEGORIES = 'update_categories';
 
 	const DELETE_PAGES          = 'delete_pages';
 	const DELETE_PAGES_ALL      = 'delete_pages_all';
@@ -34,10 +34,10 @@ class Queue {
 	const DELETE_CATEGORIES     = 'delete_categories';
 	const DELETE_CATEGORIES_ALL = 'delete_categories_all';
 
-	const PREPARE_FULL_IMPORT   = 'prepare_full_import';
-	const START_FULL_IMPORT     = 'start_full_import';
-	const GET_INFO              = 'update_info';
-	const END_FULL_IMPORT       = 'end_full_import';
+	const PREPARE_FULL_IMPORT = 'prepare_full_import';
+	const START_FULL_IMPORT   = 'start_full_import';
+	const GET_INFO            = 'update_info';
+	const END_FULL_IMPORT     = 'end_full_import';
 
 	/**
 	 * Main queue action types
@@ -232,7 +232,7 @@ class Queue {
 	public function get_total_items() {
 		global $wpdb;
 
-		return (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}wc_se_queue" ) );
+		return (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}wc_se_queue" );
 	}
 
 	/**
