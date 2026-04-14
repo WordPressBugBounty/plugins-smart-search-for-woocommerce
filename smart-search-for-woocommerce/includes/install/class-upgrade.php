@@ -128,7 +128,9 @@ class Upgrade {
 			);
 			foreach ( $database_tables as $table ) {
 				if ( strpos( $table->name, '_posts' ) ) {
-					$id = $wpdb->get_var( $wpdb->prepare( 'SELECT ID FROM %1$s WHERE post_name = %s', $table->name, 'searchanise' ) );
+					$table_name = esc_sql( $table->name );
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					$id = $wpdb->get_var( $wpdb->prepare( "SELECT ID FROM `{$table_name}` WHERE post_name = %s", 'searchanise' ) );
 					if ( ! empty( $id ) ) {
 						$result = $wpdb->delete( $table->name, array( 'ID' => $id ) );
 					}

@@ -64,6 +64,8 @@ class Api {
 	const LABEL_FOR_TRANSIENT        = 'se_transient_options_';
 	const LABEL_STATE_DATA_TRANSIENT = 'se_transient_state_data';
 
+	const CHECK_EXPORT_STATUS_DELAY  = 60;
+
 	/**
 	 * Current instance
 	 *
@@ -346,8 +348,8 @@ class Api {
 			}
 
 			if (
-				( time() - $this->get_last_request( $lang_code ) ) > 10
-				|| ( $this->get_last_request( $lang_code ) - 10 ) > time()
+				( time() - $this->get_last_request( $lang_code ) ) > self::CHECK_EXPORT_STATUS_DELAY
+				|| ( $this->get_last_request( $lang_code ) - self::CHECK_EXPORT_STATUS_DELAY ) > time()
 				|| $skip_time_check
 			) {
 				try {
@@ -358,7 +360,8 @@ class Api {
 							'status'      => '',
 							'full_import' => '',
 						),
-						true
+						true,
+						SE_SHORT_REQUEST_TIMEOUT
 					);
 
 				} catch ( Searchanise_Exception $e ) {
@@ -1389,7 +1392,7 @@ class Api {
 	 *
 	 * @return boolean
 	 */
-	public function test_connect( $timeout = 5 ) {
+	public function test_connect( $timeout = SE_SHORT_REQUEST_TIMEOUT ) {
 		$passed = true;
 
 		$result = wp_remote_get(
@@ -1416,10 +1419,11 @@ class Api {
 	 * @param string  $private_key Engine private key.
 	 * @param array   $data Data for send.
 	 * @param boolean $only_http Using http or https.
+	 * @param int     $timeout   Request timeout.
 	 *
 	 * @return string Response data
 	 */
-	public function send_request( $url, $private_key, $data = array(), $only_http = true ) {
+	public function send_request( $url, $private_key, $data = array(), $only_http = true, $timeout = SE_REQUEST_TIMEOUT ) {
 		$response = false;
 		$params   = array( 'private_key' => $private_key ) + $data;
 
@@ -1427,7 +1431,7 @@ class Api {
 			array_merge(
 				array(
 					'url'      => SE_SERVICE_URL . $url,
-					'timeout'  => SE_REQUEST_TIMEOUT,
+					'timeout'  => $timeout,
 					'method'   => 'post',
 					'onlyHttp' => $only_http,
 				),
@@ -1611,7 +1615,7 @@ class Api {
 							$this->echo_progress( $e->getMessage() );
 						}
 
-						return false;
+						continue;
 					}
 
 					if ( is_array( $response ) && ! empty( $response['keys']['api'] ) && ! empty( $response['keys']['private'] ) ) {
@@ -2102,7 +2106,8 @@ class Api {
 					array(
 						'woocommerce_store_data' => '',
 					),
-					true
+					true,
+					SE_SHORT_REQUEST_TIMEOUT
 				);
 			} catch ( Searchanise_Exception $e ) {
 				$error = $e->getMessage();
@@ -2111,13 +2116,24 @@ class Api {
 						'error' => $error,
 					)
 				);
+
+				$result = array(
+					'variable' => array(
+						'woocommerce_store_data' => array(
+							'subscription_expired' => 'N',
+							'indexing_error'       => 'N',
+							'trail_over'           => 'N',
+							'products_over_limit'  => 'N',
+						),
+					),
+				);
 			}
 		}
 
 		$variables = isset( $result['variable'] ) ? $result['variable'] : array();
 		if ( ! empty( $variables['woocommerce_store_data'] ) ) {
 
-			set_transient( $transient_name, $variables['woocommerce_store_data'], 15 );
+			set_transient( $transient_name, $variables['woocommerce_store_data'], 60 );
 			return $variables['woocommerce_store_data'];
 		}
 

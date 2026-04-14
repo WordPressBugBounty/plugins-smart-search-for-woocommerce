@@ -148,16 +148,23 @@ class Async {
 	 * @param string $async_url Async url.
 	 */
 	public static function add_jquery_objects( $async_url ) {
-		wc_enqueue_js(
-			"jQuery.ajax({
+		$script = "jQuery.ajax({
 				method: 'get',
 				url: '{$async_url}',
 				data: {
 					action: 'se_async'
 				},
 				async: true
-			});"
-		);
+			});";
+
+		if ( function_exists( 'wp_add_inline_script' ) ) {
+			$searchanise_custom_handle = 'searchanise-custom-script';
+			wp_register_script( $searchanise_custom_handle, false, array( 'jquery' ), null, true );
+			wp_enqueue_script( $searchanise_custom_handle );
+			wp_add_inline_script( $searchanise_custom_handle, $script );
+		} else {
+			wc_enqueue_js( $script );
+		}
 	}
 
 	/**
@@ -2873,14 +2880,6 @@ class Async {
 
 		if ( $lang_code && ! Api::get_instance()->check_private_key( $lang_code ) ) {
 			wp_die( esc_html( __( 'Invalid private key', 'woocommerce-searchanise' ) ) );
-		}
-
-		if ( ! empty( $_REQUEST[ self::FL_DISPLAY_ERRORS ] ) && self::FL_DISPLAY_ERRORS_KEY == $_REQUEST[ self::FL_DISPLAY_ERRORS ] ) {
-			@error_reporting( E_ALL | E_STRICT );
-			@ini_set( 'display_startup_errors', 1 );
-		} else {
-			@error_reporting( 0 );
-			@ini_set( 'display_startup_errors', 0 );
 		}
 
 		$fl_ignore_processing = ! empty( $_REQUEST[ self::FL_IGNORE_PROCESSING ] ) && self::FL_IGNORE_PROCESSING_KEY == $_REQUEST[ self::FL_IGNORE_PROCESSING ];

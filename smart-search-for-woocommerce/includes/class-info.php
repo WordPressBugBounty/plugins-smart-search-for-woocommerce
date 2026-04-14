@@ -75,7 +75,6 @@ class Info {
 			}
 		} else {
 			$resync         = self::get_param( self::RESYNC, 'N' );
-			$display_errors = self::get_param( self::DISPLAY_ERRORS, 'N' );
 			$lang_code      = self::get_param( self::LANG_CODE, Api::get_instance()->get_locale() );
 			$product_id     = self::get_param( self::PRODUCT_ID, false );
 			$product_ids    = self::get_param( self::PRODUCT_IDS, false );
@@ -83,19 +82,6 @@ class Info {
 			$category_ids   = self::get_param( self::CATEGORY_IDS, false );
 			$page_id        = self::get_param( self::PAGE_ID, false );
 			$page_ids       = self::get_param( self::PAGE_IDS, false );
-
-			if ( 'Y' == $display_errors ) {
-				@error_reporting( E_ALL | E_STRICT );
-				@ini_set( 'display_startup_errors', 1 );
-
-				fn_se_define( 'WP_DEBUG', true );
-				fn_se_define( 'WP_DEBUG_DISPLAY', true );
-			} else {
-				@error_reporting( 0 );
-				@ini_set( 'display_startup_errors', 0 );
-
-				fn_se_define( 'WP_DEBUG_DISPLAY', false );
-			}
 
 			$product_ids  = $product_id ? $product_id : ( $product_ids ? explode( ',', $product_ids ) : 0 );
 			$category_ids = $category_id ? $category_id : ( $category_ids ? explode( ',', $category_ids ) : 0 );

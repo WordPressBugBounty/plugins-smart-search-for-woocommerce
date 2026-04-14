@@ -56,8 +56,7 @@ class Navigation {
 	 */
 	public function template_include( $template ) {
 		if ( $this->is_navigation_page() ) {
-			wc_enqueue_js(
-				<<<SCRIPT
+			$script = <<<SCRIPT
             (function(window, undefined) {
                 var sXpos = 0, sIndex = 0, sTotalFrames = 12, sInterval = null;
 
@@ -84,8 +83,16 @@ class Navigation {
                     }
                 }, 30);
             }(window));
-SCRIPT
-			);
+SCRIPT;
+
+			if ( function_exists( 'wp_add_inline_script' ) ) {
+				$searchanise_custom_handle = 'searchanise-custom-script';
+				wp_register_script( $searchanise_custom_handle, false, array(), null, true );
+				wp_enqueue_script( $searchanise_custom_handle );
+				wp_add_inline_script( $searchanise_custom_handle, $script );
+			} else {
+				wc_enqueue_js( $script );
+			}
 
 			return SE_TEMPLATES_PATH . 'smart-navigation.php';
 		}

@@ -162,14 +162,11 @@ JS;
 			);
 			foreach ( $database_tables as $table ) {
 				if ( strpos( $table->name, '_posts' ) ) {
+					$table_name = esc_sql( $table->name );
 					$id = $wpdb->get_var(
-						$wpdb->prepare(
-							'SELECT ID FROM %1$s WHERE post_name = %s',
-							$table->name,
-							$page_name
-						)
+						// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+						$wpdb->prepare( "SELECT ID FROM `{$table_name}` WHERE post_name = %s", $page_name )
 					);
-
 					if ( ! empty( $id ) ) {
 						$result = $wpdb->delete( $table->name, array( 'ID' => $id ) );
 					}
@@ -192,47 +189,40 @@ JS;
 	public static function create_tables() {
 		global $wpdb;
 
-		$collate = '';
-		$result  = true;
+		$queries = array();
+		$collate = $wpdb->has_cap( 'collation' ) ? $wpdb->get_charset_collate() : '';
 
-		if ( $wpdb->has_cap( 'collation' ) ) {
-			$collate = $wpdb->get_charset_collate();
+		$queries[] = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}wc_se_settings ("
+			. " name varchar(32) NOT NULL default '',"
+			. " lang_code char(8) NOT NULL default 'default',"
+			. " value varchar(255) NOT NULL default '',"
+			. ' PRIMARY KEY (name, lang_code)'
+			. ") {$collate};";
+
+		$queries[] = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}wc_se_queue ("
+			. ' queue_id mediumint NOT NULL auto_increment,'
+			. ' data text,'
+			. " action varchar(32) NOT NULL default '',"
+			. " lang_code char(8) NOT NULL default '',"
+			. ' started int(11) NOT NULL DEFAULT 0,'
+			. " status enum('pending', 'processing') default 'pending',"
+			. ' priority int(2) NOT NULL DEFAULT 1,'
+			. ' attempts int(2) NOT NULL DEFAULT 0,'
+			. ' error MEDIUMTEXT NULL DEFAULT NULL,'
+			. ' PRIMARY KEY (queue_id),'
+			. ' KEY status (`status`),'
+			. ' KEY StoreAction (`lang_code`,`action`)'
+			. ") {$collate};";
+
+		foreach ( $queries as $sql ) {
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+			if ( $wpdb->query( $sql ) === false ) {
+				$wpdb->print_error();
+				return false;
+			}
 		}
 
-		if ( $wpdb->query(
-			$wpdb->prepare(
-				"CREATE TABLE IF NOT EXISTS {$wpdb->prefix}wc_se_settings ("
-				. " name varchar(32) NOT NULL default '',"
-				. " lang_code char(8) NOT NULL default 'default',"
-				. " value varchar(255) NOT NULL default '',"
-				. ' PRIMARY KEY (name, lang_code)'
-				. ') %1$s;',
-				$collate
-			)
-		) === false || $wpdb->query(
-			$wpdb->prepare(
-				"CREATE TABLE IF NOT EXISTS {$wpdb->prefix}wc_se_queue ("
-					. ' queue_id mediumint NOT NULL auto_increment,'
-					. ' data text,'
-					. " action varchar(32) NOT NULL default '',"
-					. " lang_code char(8) NOT NULL default '',"
-					. ' started int(11) NOT NULL DEFAULT 0,'
-					. " status enum('pending', 'processing') default 'pending',"
-					. ' priority int(2) NOT NULL DEFAULT 1,'
-					. ' attempts int(2) NOT NULL DEFAULT 0,'
-					. ' error MEDIUMTEXT NULL DEFAULT NULL,'
-					. ' PRIMARY KEY (queue_id),'
-					. ' KEY status (`status`),'
-					. ' KEY StoreAction (`lang_code`,`action`)'
-					. ') %1$s;',
-				$collate
-			)
-		) === false ) {
-			$result = false;
-			$wpdb->print_error();
-		}
-
-		return $result;
+		return true;
 	}
 
 	/**

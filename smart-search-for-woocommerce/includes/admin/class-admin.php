@@ -31,15 +31,6 @@ class Admin {
 
 		add_action( 'admin_init', array( $this, 'init' ) );
 		add_action( 'wp_loaded', array( $this, 'register' ) );
-
-		add_action(
-			'before_woocommerce_init',
-			function () {
-				if ( class_exists( '\Automattic\WooCommerce\Utilities\FeaturesUtil' ) ) {
-					\Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'custom_order_tables', 'woocommerce-searchanise.php', true );
-				}
-			}
-		);
 	}
 
 	/**
@@ -276,13 +267,20 @@ class Admin {
 					sprintf( '<strong>%s</strong>', Api::get_instance()->get_product_name() ),
 					'<a href="https://wordpress.org/support/plugin/smart-search-for-woocommerce/reviews?rate=5#new-post" target="_blank" class="se-rating-link" data-rated="' . esc_attr__( 'Thanks :)', 'woocommerce-searchanise' ) . '">&#9733;&#9733;&#9733;&#9733;&#9733;</a>'
 				);
-				wc_enqueue_js(
-					"jQuery('a.se-rating-link').click( function() {
-						jQuery.get('" . admin_url( 'admin-ajax.php' ) . "', {action: 'searchanise_rated'});
-						jQuery(this).parent().text(jQuery(this).data('rated'));
-					});"
-				);
 
+				$script = "jQuery('a.se-rating-link').click( function() {
+					jQuery.get('" . admin_url( 'admin-ajax.php' ) . "', {action: 'searchanise_rated'});
+					jQuery(this).parent().text(jQuery(this).data('rated'));
+				});";
+
+				if ( function_exists( 'wp_add_inline_script' ) ) {
+					$searchanise_custom_handle = 'searchanise-custom-script';
+					wp_register_script( $searchanise_custom_handle, false, array( 'jquery' ), null, true );
+					wp_enqueue_script( $searchanise_custom_handle );
+					wp_add_inline_script( $searchanise_custom_handle, $script );
+				} else {
+					wc_enqueue_js( $script );
+				}
 			} else {
 				$footer_text = sprintf(
 					/* translators: %s: product name */

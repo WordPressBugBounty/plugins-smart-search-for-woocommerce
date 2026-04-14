@@ -19,14 +19,15 @@ function fn_se_define_constants() {
 	fn_se_define( 'SE_ERROR_LOG', false );     // Log error messages.
 	fn_se_define( 'SE_DEBUG', false );         // Print debug & error messages.
 
-	fn_se_define( 'SE_REQUEST_TIMEOUT', 30 );  // API request timeout.
+	fn_se_define( 'SE_REQUEST_TIMEOUT', 30 );       // API request timeout.
+	fn_se_define( 'SE_SHORT_REQUEST_TIMEOUT', 5 );  // API short request timeout.
 
 	fn_se_define( 'SE_PRODUCTS_PER_PASS', 100 );
 	fn_se_define( 'SE_CATEGORIES_PER_PASS', 500 );
 	fn_se_define( 'SE_PAGES_PER_PASS', 100 );
 
 	fn_se_define( 'SE_VERSION', '1.3' );
-	fn_se_define( 'SE_PLUGIN_VERSION', '1.0.18' );
+	fn_se_define( 'SE_PLUGIN_VERSION', '1.0.19' );
 	fn_se_define( 'SE_MEMORY_LIMIT', '512M' );
 	fn_se_define( 'SE_MAX_ERROR_COUNT', 3 );
 	fn_se_define( 'SE_MAX_PROCESSING_TIME', 720 );
@@ -37,8 +38,7 @@ function fn_se_define_constants() {
 
 	fn_se_define( 'SE_ABSPATH', __DIR__ );
 	fn_se_define( 'SE_PLUGIN_BASENAME', plugin_basename( __DIR__ . DIRECTORY_SEPARATOR . 'woocommerce-searchanise.php' ) );
-	$wp_plugin_dir = str_replace( array( '\\', '/' ), DIRECTORY_SEPARATOR, WP_PLUGIN_DIR );
-	fn_se_define( 'SE_BASE_DIR', str_replace( $wp_plugin_dir, '', __DIR__ ) );
+	fn_se_define( 'SE_BASE_DIR', basename( __DIR__ ) );
 	fn_se_define( 'SE_LOG_DIR', $upload_dir['basedir'] . DIRECTORY_SEPARATOR . 'se_logs' );
 	fn_se_define( 'SE_TEMPLATES_PATH', __DIR__ . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR );
 	fn_se_define( 'SE_VENDOR_PATH', __DIR__ . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR );

@@ -17,6 +17,10 @@ use Searchanise\Extensions\WcSeJetpack;
  */
 class Bootstrap {
 
+	const PHP_OPTION_DISPLAY_STARTUP_ERRORS = 'display_startup_errors';
+	const PHP_OPTION_DISPLAY_ERRORS = 'display_errors';
+	const PHP_OPTION_ERROR_REPORTING = 'error_reporting';
+
 	/**
 	 * Initialization
 	 */
@@ -40,10 +44,16 @@ class Bootstrap {
 			return;
 		}
 
-		if (
-			SE_DEBUG ||
-			( isset( $_REQUEST[ Async::FL_DISPLAY_ERRORS ] ) && Async::FL_DISPLAY_ERRORS_KEY == $_REQUEST[ Async::FL_DISPLAY_ERRORS ] )
-		) {
+		if ( SE_DEBUG ) {
+			fn_se_define( 'WP_DEBUG', true );
+			fn_se_define( 'WP_DEBUG_DISPLAY', true );
+		}
+
+		if ( ! empty( $_REQUEST[ Async::FL_DISPLAY_ERRORS ] ) && Async::FL_DISPLAY_ERRORS_KEY == $_REQUEST[ Async::FL_DISPLAY_ERRORS ] ) {
+			@ini_set( self::PHP_OPTION_ERROR_REPORTING, E_ALL );
+			@ini_set( self::PHP_OPTION_DISPLAY_STARTUP_ERRORS, 1 );
+			@ini_set( self::PHP_OPTION_DISPLAY_ERRORS, 1 );
+
 			fn_se_define( 'WP_DEBUG', true );
 			fn_se_define( 'WP_DEBUG_DISPLAY', true );
 		}
@@ -67,6 +77,40 @@ class Bootstrap {
 		add_action( 'init', array( Info::class, 'init' ) );
 
 		// Init Se cron.
+		if ( defined( 'DOING_CRON' ) && DOING_CRON ) {
+			add_action(
+				'init',
+				function () {
+					/**
+					 * Initialize Woocommerce session
+					 *
+					 * @since 3.6.4
+					 */
+					$session_class    = apply_filters( 'woocommerce_session_handler', 'WC_Session_Handler' );
+					$default_location = wc_get_customer_default_location();
+
+					WC()->session = new $session_class();
+					WC()->session->set(
+						'customer',
+						array(
+							'postcode'         => WC()->countries->get_base_postcode(),
+							'city'             => WC()->countries->get_base_city(),
+							'address_1'        => WC()->countries->get_base_address(),
+							'address_2'        => WC()->countries->get_base_address_2(),
+							'country'          => isset( $default_location['country'] ) ? $default_location['country'] : WC()->countries->get_base_country(),
+							'billing_country'  => isset( $default_location['country'] ) ? $default_location['country'] : WC()->countries->get_base_country(),
+							'shipping_country' => isset( $default_location['country'] ) ? $default_location['country'] : WC()->countries->get_base_country(),
+							'state'            => isset( $default_location['state'] ) ? $default_location['state'] : WC()->countries->get_base_state(),
+							'billing_state'    => isset( $default_location['state'] ) ? $default_location['state'] : WC()->countries->get_base_state(),
+							'shipping_state'   => isset( $default_location['state'] ) ? $default_location['state'] : WC()->countries->get_base_state(),
+						)
+					);
+					WC()->customer = new \WC_Customer();
+					include_once WC()->plugin_path() . '/includes/wc-cart-functions.php';
+				}
+			);
+		}
+
 		add_filter( 'cron_schedules', array( Cron::class, 'add_intervals' ) );
 		add_action( 'wp', array( Cron::class, 'activate' ) );
 		add_action( Cron::CRON_INDEX_EVENT, array( Cron::class, 'indexer' ) );

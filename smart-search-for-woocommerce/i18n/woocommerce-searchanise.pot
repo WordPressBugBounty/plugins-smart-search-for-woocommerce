@@ -1,17 +1,17 @@
-# Copyright (C) 2025 Searchanise
+# Copyright (C) 2026 Searchanise
 # This file is distributed under the GPLv3.
 msgid ""
 msgstr ""
-"Project-Id-Version: Smart WooCommerce Search by Searchanise 1.0.18\n"
+"Project-Id-Version: Smart WooCommerce Search by Searchanise 1.0.19\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/searchanise_woocommerce\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2025-03-24T10:59:30+00:00\n"
+"POT-Creation-Date: 2026-04-14T11:56:42+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"X-Generator: WP-CLI 2.10.0\n"
+"X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: woocommerce-searchanise\n"
 
 #. Plugin Name of the plugin
@@ -33,8 +33,8 @@ msgstr ""
 #. Author of the plugin
 #: woocommerce-searchanise.php
 #: includes/admin/class-admin-setting.php:164
-#: includes/admin/class-admin.php:250
-#: includes/admin/class-admin.php:251
+#: includes/admin/class-admin.php:212
+#: includes/admin/class-admin.php:213
 msgid "Searchanise"
 msgstr ""
 
@@ -108,6 +108,7 @@ msgstr ""
 
 #. translators: %s: support email
 #: includes/admin/class-admin-dashboard.php:360
+#, php-format
 msgid "We couldn’t get the data, please try to check it later or contact <a href=\"mailto:%s\" target=\"blank\">Searchanise support</a>"
 msgstr ""
 
@@ -271,67 +272,69 @@ msgstr ""
 msgid "Select \"Yes\" to display \"Smart Search Analytics\" widget on dashboard page."
 msgstr ""
 
-#. translators: %s is a placeholder for the subscriptions URL
-#: includes/admin/class-admin.php:73
-msgid "The Searchanise app is not working now because your subscription is not active. Please <a href=\" %s\">upgrade your subscription</a> to continue enjoying Searchanise in full."
-msgstr ""
-
-#: includes/admin/class-admin.php:88
+#: includes/admin/class-admin.php:50
 msgid "<a href=\"https://wordpress.org/plugins/woocommerce\">WooCommerce</a> plugin should be enabled to work correctly."
 msgstr ""
 
-#: includes/admin/class-admin.php:100
+#: includes/admin/class-admin.php:62
 msgid "Plugin was deactivated."
 msgstr ""
 
 #. translators: %s: admin panel
-#: includes/admin/class-admin.php:168
+#: includes/admin/class-admin.php:130
+#, php-format
 msgid "Plugin was successfully updated. Catalog indexation in process. <a href=\"%s\">Admin Panel</a>."
 msgstr ""
 
 #. translators: %s: admin panel
-#: includes/admin/class-admin.php:176
+#: includes/admin/class-admin.php:138
+#, php-format
 msgid "In the new version 1.0.12 of the plugin, the settings moved from <b>Settings → Searchanise</b> to the <b><a href=\"%1$s\">WooCommerce → Settings → Searchanise</a></b> and <br />admin panel moved from <b>Products → Searchanise</b> to <b><a href=\"%2$s\"> Woocommerce → Searchanise</a></b>."
 msgstr ""
 
 #. translators: %s: admin panel
-#: includes/admin/class-admin.php:187
+#: includes/admin/class-admin.php:149
+#, php-format
 msgid "Plugin was successfully installed. Catalog indexation in process. <a href=\"%s\">Admin Panel</a>."
 msgstr ""
 
 #. translators: %s: admin panel
-#: includes/admin/class-admin.php:194
+#: includes/admin/class-admin.php:156
+#, php-format
 msgid "Plugin was successfully activated. Catalog indexation in process. <a href=\"%s\">Admin Panel</a>."
 msgstr ""
 
 #. translators: %s: support email
-#: includes/admin/class-admin.php:209
+#: includes/admin/class-admin.php:171
+#, php-format
 msgid "Something is wrong in plugin registration. Please contact Searchanise <a href=\"mailto:%1$s\">%2$s</a> technical support"
 msgstr ""
 
-#: includes/admin/class-admin.php:237
+#: includes/admin/class-admin.php:199
 msgid "Admin Panel"
 msgstr ""
 
-#: includes/admin/class-admin.php:238
+#: includes/admin/class-admin.php:200
 msgid "Settings"
 msgstr ""
 
 #. translators: %s: review link
-#: includes/admin/class-admin.php:304
+#: includes/admin/class-admin.php:266
+#, php-format
 msgid "If you like %1$s please leave us a %2$s rating. A huge thanks in advance!"
 msgstr ""
 
-#: includes/admin/class-admin.php:306
+#: includes/admin/class-admin.php:268
 msgid "Thanks :)"
 msgstr ""
 
 #. translators: %s: product name
-#: includes/admin/class-admin.php:318
+#: includes/admin/class-admin.php:287
+#, php-format
 msgid "Thank you for using <strong>%s</strong>."
 msgstr ""
 
-#: includes/admin/class-admin.php:428
+#: includes/admin/class-admin.php:397
 msgid "Access denied."
 msgstr ""
 
@@ -341,43 +344,49 @@ msgstr ""
 
 #. translators: version
 #: includes/class-hooks.php:155
-msgid "Plugin is compatible with Wordpress version %1$s or higher. Plugin may work incorrectly. Please upgrade your Wordpress to %2$s version or highter"
+#, php-format
+msgid "Plugin is compatible with WordPress version %1$s or higher. Plugin may work incorrectly. Please upgrade your WordPress to %2$s version or highter"
 msgstr ""
 
 #. translators: version
 #: includes/class-hooks.php:163
+#, php-format
 msgid "The plugin is compatible with WooCommerce version %1$s or higher. The plugin may work incorrectly. Please upgrade your WooCommerce to %2$s version or highter"
 msgstr ""
 
 #. translators: link
 #: includes/class-hooks.php:967
+#, php-format
 msgid "Catalog should be re-indexed to display correct data in storefront. Please <a href=\"%s\">force re-indexation</a>"
 msgstr ""
 
 #. translators: title
 #: includes/class-hooks.php:1062
+#, php-format
 msgid "Page \"%s\" is used to display Searchanise search results and cannot be deleted. Page was restored from trash."
 msgstr ""
 
 #. translators: service url
-#: includes/helpers/class-api.php:1213
+#: includes/helpers/class-api.php:1227
+#, php-format
 msgid "Searchanise: There is no connection to Searchanise server! For Searchanise to work properly, the store server must be able to access %s. Please contact Searchanise <a href=\"mailto: feedback@searchanise.com\">feedback@searchanise.com</a> technical support or your system administrator."
 msgstr ""
 
-#: includes/helpers/class-api.php:1217
+#: includes/helpers/class-api.php:1231
 msgid "Searchanise: We found an issue with the export of changes in your store catalog. To resolve the issue please contact Searchanise <a href=\"mailto:feedback@searchanise.com\">feedback@searchanise.com</a> technical support."
 msgstr ""
 
-#: includes/helpers/class-api.php:1476
+#: includes/helpers/class-api.php:1491
 msgid "Empty private key"
 msgstr ""
 
-#: includes/helpers/class-api.php:1669
+#: includes/helpers/class-api.php:1692
 msgid "The product catalog is queued for syncing"
 msgstr ""
 
 #. translators: admin url
-#: includes/helpers/class-api.php:1693
+#: includes/helpers/class-api.php:1716
+#, php-format
 msgid "Catalog indexation is complete. Use <a href=\"%s\">Admin Panel</a> for configuration."
 msgstr ""
 
@@ -385,76 +394,77 @@ msgstr ""
 msgid "Search results"
 msgstr ""
 
-#: includes/queue/class-async.php:422
+#: includes/queue/class-async.php:429
 msgid "Unknown queue action"
 msgstr ""
 
-#: includes/queue/class-async.php:427
+#: includes/queue/class-async.php:434
 msgid "SQL Error"
 msgstr ""
 
-#: includes/queue/class-async.php:1353
+#: includes/queue/class-async.php:1360
 msgid "Price for "
 msgstr ""
 
-#: includes/queue/class-async.php:1359
+#: includes/queue/class-async.php:1366
 msgid "Max price for "
 msgstr ""
 
-#: includes/queue/class-async.php:1365
+#: includes/queue/class-async.php:1372
 msgid "Regular price "
 msgstr ""
 
-#: includes/queue/class-async.php:1650
+#: includes/queue/class-async.php:1657
 msgid "product Id"
 msgstr ""
 
-#: includes/queue/class-async.php:1663
+#: includes/queue/class-async.php:1670
 msgid "Summary"
 msgstr ""
 
-#: includes/queue/class-async.php:1671
+#: includes/queue/class-async.php:1678
 msgid "Product URL"
 msgstr ""
 
-#: includes/queue/class-async.php:1687
+#: includes/queue/class-async.php:1694
 msgid "Image link"
 msgstr ""
 
-#: includes/queue/class-async.php:1782
+#: includes/queue/class-async.php:1789
 msgid "WooCommerce variants"
 msgstr ""
 
-#: includes/queue/class-async.php:1970
+#: includes/queue/class-async.php:1977
 msgid "Total reviews"
 msgstr ""
 
-#: includes/queue/class-async.php:1974
+#: includes/queue/class-async.php:1981
 msgid "Average reviews score"
 msgstr ""
 
-#: includes/queue/class-async.php:2260
+#: includes/queue/class-async.php:2267
 msgid "Meta title"
 msgstr ""
 
-#: includes/queue/class-async.php:2269
+#: includes/queue/class-async.php:2276
 msgid "Meta description"
 msgstr ""
 
-#: includes/queue/class-async.php:2278
+#: includes/queue/class-async.php:2285
 msgid "Meta keywords"
 msgstr ""
 
-#: includes/queue/class-async.php:2869
+#: includes/queue/class-async.php:2876
 msgid "Searchanise module not enabled"
 msgstr ""
 
-#: includes/queue/class-async.php:2875
+#: includes/queue/class-async.php:2882
 msgid "Invalid private key"
 msgstr ""
 
 #. translators: status
-#: includes/queue/class-async.php:2893
+#: includes/queue/class-async.php:2892
+#, php-format
 msgid "Searchanise status sync: %s"
 msgstr ""
 

@@ -85,8 +85,7 @@ class Search_Results {
 				$this->is_search_results_page = $post_id && $post_id == $this->search_results_page_id;
 
 				if ( $this->is_search_results_page ) {
-					wc_enqueue_js(
-						<<<SE_SPINNER
+					$script = <<<SE_SPINNER
 	(function(window, undefined) {
 		var sXpos = 0, sIndex = 0, sInterval = null;
 
@@ -112,8 +111,16 @@ class Search_Results {
 			}
 		}, 30);
 	}(window));
-SE_SPINNER
-					);
+SE_SPINNER;
+
+					if ( function_exists( 'wp_add_inline_script' ) ) {
+						$searchanise_custom_handle = 'searchanise-custom-script';
+						wp_register_script( $searchanise_custom_handle, false, array(), null, true );
+						wp_enqueue_script( $searchanise_custom_handle );
+						wp_add_inline_script( $searchanise_custom_handle, $script );
+					} else {
+						wc_enqueue_js( $script );
+					}
 				}
 			}
 		);
@@ -445,8 +452,25 @@ SE_SPINNER
 			'hideEmptyPrice'               => Api::get_instance()->get_hide_empty_price(),
 		);
 
+		$searchanise_custom_handle = 'searchanise-custom-script';
+		$selector = Api::get_instance()->escape_javascript(
+			Api::get_instance()->get_search_input_selector()
+		);
+
 		// Do not include search in admin toolbar.
-		wc_enqueue_js( 'jQuery("#wpadminbar").find("' . Api::get_instance()->escape_javascript( Api::get_instance()->get_search_input_selector() ) . '").addClass("snize-exclude-input")' );
+		$script = "
+			jQuery(function($) {
+				$('#wpadminbar').find('{$selector}').addClass('snize-exclude-input');
+			});
+		";
+
+		if ( function_exists( 'wp_add_inline_script' ) ) {
+			wp_register_script( $searchanise_custom_handle, false, array( 'jquery' ), null, true );
+			wp_enqueue_script( $searchanise_custom_handle );
+			wp_add_inline_script( $searchanise_custom_handle, $script );
+		} else {
+			wc_enqueue_js( $script );
+		}
 
 		// Loading css.
 		wp_enqueue_style( 'se_styles', plugins_url( SE_BASE_DIR . '/assets/css/se-styles.css' ), array(), SE_PLUGIN_VERSION, false );
@@ -462,11 +486,21 @@ SE_SPINNER
 		wp_enqueue_script( 'se-widgets' );
 
 		// Refresh shopping cart.
-		wc_enqueue_js(
-			"jQuery(document).on('Searchanise.AddToCartSuccess', function() {
-                jQuery(document.body).trigger('wc_fragment_refresh');
-            });"
-		);
+		$script = "
+			jQuery(function($) {
+				$(document).on('Searchanise.AddToCartSuccess', function() {
+					$(document.body).trigger('wc_fragment_refresh');
+				});
+			});
+		";
+
+		if ( function_exists( 'wp_add_inline_script' ) ) {
+			wp_register_script( $searchanise_custom_handle, false, array( 'jquery' ), null, true );
+			wp_enqueue_script( $searchanise_custom_handle );
+			wp_add_inline_script( $searchanise_custom_handle, $script );
+		} else {
+			wc_enqueue_js( $script );
+		}
 	}
 
 	/**
