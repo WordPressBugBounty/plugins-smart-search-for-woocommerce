@@ -14,6 +14,8 @@ defined( 'ABSPATH' ) || exit;
  */
 class Navigation {
 
+	const REQUEST_PARAM_DISABLE_SMART_NAVIGATION = 'searchanise_disable_smart_navigation';
+
 	/**
 	 * Lang code
 	 *
@@ -29,10 +31,20 @@ class Navigation {
 	public function __construct( $lang_code ) {
 		$this->lang_code = $lang_code;
 
-		if ( Api::get_instance()->is_navigation_enabled( $lang_code ) ) {
+		if ( self::is_navigation_enabled( $lang_code ) ) {
 			$this->init();
 		}
 	}
+
+	/**
+	 * Returns if navigation enabled
+	 *
+	 * @param string $lang_code Lang code.
+	 */
+	public static function is_navigation_enabled( $lang_code ) {
+		return Api::get_instance()->is_navigation_enabled( $lang_code ) && self::is_smart_navigation_enabled_from_request();
+	}
+
 
 	/**
 	 * Class init
@@ -56,7 +68,7 @@ class Navigation {
 	 */
 	public function template_include( $template ) {
 		if ( $this->is_navigation_page() ) {
-			$script = <<<SCRIPT
+			$script = "
             (function(window, undefined) {
                 var sXpos = 0, sIndex = 0, sTotalFrames = 12, sInterval = null;
 
@@ -64,7 +76,7 @@ class Navigation {
                     return;
                 }
 
-                document.getElementById('snize_results').innerHTML = '<div id="snize-preload-spinner"></div>';
+                document.getElementById('snize_results').innerHTML = '<div id=\"snize-preload-spinner\"></div>';
                 sInterval = setInterval(function()
                 {
                     var spinner = document.getElementById('snize-preload-spinner');
@@ -83,11 +95,11 @@ class Navigation {
                     }
                 }, 30);
             }(window));
-SCRIPT;
+";
 
 			if ( function_exists( 'wp_add_inline_script' ) ) {
 				$searchanise_custom_handle = 'searchanise-custom-script';
-				wp_register_script( $searchanise_custom_handle, false, array(), null, true );
+				wp_register_script( $searchanise_custom_handle, false, array(), SE_PLUGIN_VERSION, true );
 				wp_enqueue_script( $searchanise_custom_handle );
 				wp_add_inline_script( $searchanise_custom_handle, $script );
 			} else {
@@ -118,5 +130,18 @@ SCRIPT;
 	 */
 	private function is_navigation_page() {
 		return is_woocommerce() && is_product_category();
+	}
+
+	/**
+	 * Returns if navigation enabled from request param
+	 */
+	private static function is_smart_navigation_enabled_from_request() {
+		if ( ! isset( $_REQUEST[ self::REQUEST_PARAM_DISABLE_SMART_NAVIGATION ] ) ) {
+			return true;
+		}
+
+		return sanitize_text_field(
+			wp_unslash( $_REQUEST[ self::REQUEST_PARAM_DISABLE_SMART_NAVIGATION ] )
+		) !== 'true';
 	}
 }

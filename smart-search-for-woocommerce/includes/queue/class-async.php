@@ -10,7 +10,7 @@ namespace Searchanise\SmartWoocommerceSearch;
 defined( 'ABSPATH' ) || exit;
 
 /**
- * Searchanise syncronisation class
+ * Searchanise synchronisation class
  */
 class Async {
 
@@ -159,7 +159,7 @@ class Async {
 
 		if ( function_exists( 'wp_add_inline_script' ) ) {
 			$searchanise_custom_handle = 'searchanise-custom-script';
-			wp_register_script( $searchanise_custom_handle, false, array( 'jquery' ), null, true );
+			wp_register_script( $searchanise_custom_handle, false, array( 'jquery' ), SE_PLUGIN_VERSION, true );
 			wp_enqueue_script( $searchanise_custom_handle );
 			wp_add_inline_script( $searchanise_custom_handle, $script );
 		} else {
@@ -196,8 +196,11 @@ class Async {
 	public function async( $lang_code = null, $fl_ignore_processing = false ) {
 		global $wpdb;
 
+		$max_execution_time_original = @ini_get( 'max_execution_time' );
+		$max_execution_time_original = false === $max_execution_time_original ? 30 : intval( $max_execution_time_original );
+
 		@ignore_user_abort( true );
-		@set_time_limit( 0 );
+		@set_time_limit( 0 ); // phpcs:ignore Squiz.PHP.DiscouragedFunctions
 		wp_raise_memory_limit( 'searchanise_async' );
 
 		$locale_switched = false;
@@ -206,6 +209,8 @@ class Async {
 			if ( switch_to_locale( $lang_code ) == true ) {
 				$locale_switched = true;
 			} else {
+				@set_time_limit( $max_execution_time_original ); // phpcs:ignore Squiz.PHP.DiscouragedFunctions
+
 				return self::STATUS_ASYNC_ERROR_LANG;
 			}
 		}
@@ -241,12 +246,16 @@ class Async {
 
 			if ( Queue::is_queue_running( $q ) ) {
 				if ( ! $fl_ignore_processing ) {
+					@set_time_limit( $max_execution_time_original ); // phpcs:ignore Squiz.PHP.DiscouragedFunctions
+
 					return self::STATUS_ASYNC_PROCESSING;
 				}
 			}
 
 			if ( Queue::is_queue_has_error( $q ) ) {
 				Api::get_instance()->set_export_status( Api::EXPORT_STATUS_SYNC_ERROR, $engine['lang_code'] );
+				@set_time_limit( $max_execution_time_original ); // phpcs:ignore Squiz.PHP.DiscouragedFunctions
+
 				return self::STATUS_ASYNC_DISABLED;
 			}
 
@@ -420,18 +429,18 @@ class Async {
 						$status = Api::get_instance()->send_request( '/api/phrases/update/json', $private_key, array( 'phrase' => $phrase ), true );
 						Api::get_instance()->echo_progress( '.' );
 
-						if ( false == $status ) {
+						if ( ! $status ) {
 							break;
 						}
 					}
 				} else {
 					// Unknown action name.
-					throw new Searchanise_Exception( __( 'Unknown queue action', 'woocommerce-searchanise' ) );
+					throw new Searchanise_Exception( __( 'Unknown queue action', 'smart-search-for-woocommerce' ) );
 				} // End if
 
 				// Check for database errors.
 				if ( '' != $wpdb->last_error ) {
-					throw new Searchanise_Exception( __( 'SQL Error', 'woocommerce-searchanise' ) . ' ' . $wpdb->last_error . '. Query: ' . $wpdb->last_query );
+					throw new Searchanise_Exception( __( 'SQL Error', 'smart-search-for-woocommerce' ) . ' ' . $wpdb->last_error . '. Query: ' . $wpdb->last_query );
 				}
 
 				Profiler::end_block( $q->action . ':' . $q->queue_id );
@@ -467,12 +476,14 @@ class Async {
 		Profiler::end_block( 'async' );
 
 		// Restore locale if it was switched.
-		if ( true == $locale_switched ) {
+		if ( $locale_switched ) {
 			restore_previous_locale();
 		}
 
 		$info = Profiler::get_blocks_info();
 		Logger::get_instance()->debug( $info );
+
+		@set_time_limit( $max_execution_time_original ); // phpcs:ignore Squiz.PHP.DiscouragedFunctions
 
 		return self::STATUS_ASYNC_OK;
 	}
@@ -506,7 +517,7 @@ class Async {
 		 * @param array $header      Header data
 		 * @param string $lang_code  Lang code
 		 */
-		return (array) apply_filters( 'se_get_header', $header, $lang_code );
+		return (array) apply_filters( 'searchanise_get_header', $header, $lang_code );
 	}
 
 	/**
@@ -596,6 +607,8 @@ class Async {
 	public function get_min_max_product_id( $is_only_active = true, $lang_code = '' ) {
 		global $wpdb;
 
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
 		$min_max = $wpdb->get_row(
 			$wpdb->prepare(
 				"SELECT
@@ -609,6 +622,7 @@ class Async {
 			),
 			ARRAY_A
 		);
+		// phpcs:enable
 
 		return array( (int) $min_max['min'], (int) $min_max['max'] );
 	}
@@ -624,6 +638,8 @@ class Async {
 	public function get_products_count( $is_only_active, $lang_code = '' ) {
 		global $wpdb;
 
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
 		$count = (int) $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT
@@ -635,6 +651,7 @@ class Async {
 				'product'
 			)
 		);
+		// phpcs:enable
 
 		return $count;
 	}
@@ -649,6 +666,8 @@ class Async {
 	private function get_min_max_category_id( $lang_code ) {
 		global $wpdb;
 
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
 		$min_max = $wpdb->get_row(
 			$wpdb->prepare(
 				"SELECT
@@ -660,6 +679,7 @@ class Async {
 			),
 			ARRAY_A
 		);
+		// phpcs:enable
 
 		return array( (int) $min_max['min'], (int) $min_max['max'] );
 	}
@@ -674,6 +694,8 @@ class Async {
 	public function get_min_max_page_id( $lang_code ) {
 		global $wpdb;
 
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
 		$min_max = $wpdb->get_row(
 			$wpdb->prepare(
 				"SELECT
@@ -686,6 +708,7 @@ class Async {
 			),
 			ARRAY_A
 		);
+		// phpcs:enable
 
 		return array( (int) $min_max['min'], (int) $min_max['max'] );
 	}
@@ -706,6 +729,8 @@ class Async {
 
 		$statuses = array( 'draft', 'pending', 'private', 'publish' );
 
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
 		$ids = $wpdb->get_col(
 			$wpdb->prepare(
 				"SELECT
@@ -725,6 +750,7 @@ class Async {
 				$step
 			)
 		);
+		// phpcs:enable
 
 		/**
 		 * Filters product_ids from given range
@@ -737,7 +763,7 @@ class Async {
 		 * @param int $step         Maximum products count
 		 * @param string $lang_code Lang code
 		 */
-		return (array) apply_filters( 'se_get_products_ids_from_range', $ids, $start, $end, $step, $lang_code, $is_only_active );
+		return (array) apply_filters( 'searchanise_get_products_ids_from_range', $ids, $start, $end, $step, $lang_code, $is_only_active );
 	}
 
 	/**
@@ -753,6 +779,8 @@ class Async {
 	private function get_categories_ids_from_range( $start, $end, $step, $lang_code ) {
 		global $wpdb;
 
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
 		$ids = $wpdb->get_col(
 			$wpdb->prepare(
 				"SELECT
@@ -767,6 +795,7 @@ class Async {
 				array( 'product_cat', $start, $end, $step )
 			)
 		);
+		// phpcs:enable
 
 		/**
 		 * Filters category_ids from given range
@@ -779,7 +808,7 @@ class Async {
 		 * @param int $step         Maximum categories count
 		 * @param string $lang_code Lang code
 		 */
-		return (array) apply_filters( 'se_get_categories_ids_from_range', $ids, $start, $end, $step, $lang_code );
+		return (array) apply_filters( 'searchanise_get_categories_ids_from_range', $ids, $start, $end, $step, $lang_code );
 	}
 
 	/**
@@ -795,6 +824,8 @@ class Async {
 	private function get_pages_ids_from_range( $start, $end, $step, $lang_code ) {
 		global $wpdb;
 
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
 		$ids = $wpdb->get_col(
 			$wpdb->prepare(
 				"SELECT
@@ -810,6 +841,7 @@ class Async {
 				array( $start, $end, 'publish', $step )
 			)
 		);
+		// phpcs:enable
 
 		/**
 		 * Filters page_ids from given range
@@ -822,7 +854,7 @@ class Async {
 		 * @param int $step         Maximum pages count
 		 * @param string $lang_code Lang code
 		 */
-		return (array) apply_filters( 'se_get_pages_ids_from_range', $ids, $start, $end, $step, $lang_code );
+		return (array) apply_filters( 'searchanise_get_pages_ids_from_range', $ids, $start, $end, $step, $lang_code );
 	}
 
 	/**
@@ -837,14 +869,14 @@ class Async {
 
 		$filters[] = array(
 			'name'     => 'price',
-			'label'    => __( 'Price', 'woocommerce' ),
+			'label'    => __( 'Price', 'smart-search-for-woocommerce' ),
 			'type'     => 'slider',
 			'position' => 5,
 		);
 
 		$filters[] = array(
 			'name'     => 'stock_status',
-			'label'    => __( 'Stock status', 'woocommerce' ),
+			'label'    => __( 'Stock status', 'smart-search-for-woocommerce' ),
 			'type'     => 'select',
 			'position' => 10,
 		);
@@ -852,7 +884,7 @@ class Async {
 		if ( Api::get_instance()->is_result_widget_enabled( $lang_code ) ) {
 			$filters[] = array(
 				'name'        => 'categories',
-				'label'       => __( 'Categories', 'woocommerce' ),
+				'label'       => __( 'Categories', 'smart-search-for-woocommerce' ),
 				'type'        => 'select',
 				'text_search' => 'Y',
 				'weight'      => self::WEIGHT_CATEGORIES,
@@ -860,7 +892,7 @@ class Async {
 			);
 			$filters[] = array(
 				'name'        => 'category_ids',
-				'label'       => __( 'Categories', 'woocommerce' ) . ' - IDs',
+				'label'       => __( 'Categories', 'smart-search-for-woocommerce' ) . ' - IDs',
 				'weight'      => 0,
 				'text_search' => 'N',
 				'facet'       => 'N',
@@ -868,7 +900,7 @@ class Async {
 		} else {
 			$filters[] = array(
 				'name'        => 'category_ids',
-				'label'       => __( 'Categories', 'woocommerce' ) . ' - IDs',
+				'label'       => __( 'Categories', 'smart-search-for-woocommerce' ) . ' - IDs',
 				'type'        => 'select',
 				'text_search' => 'N',
 				'weight'      => 0,
@@ -876,7 +908,7 @@ class Async {
 			);
 			$filters[] = array(
 				'name'        => 'categories',
-				'label'       => __( 'Categories', 'woocommerce' ),
+				'label'       => __( 'Categories', 'smart-search-for-woocommerce' ),
 				'text_search' => 'N',
 				'weight'      => 0,
 				'facet'       => 'N',
@@ -885,7 +917,7 @@ class Async {
 
 		$filters[] = array(
 			'name'     => 'tags',
-			'label'    => __( 'Product tags', 'woocommerce' ),
+			'label'    => __( 'Product tags', 'smart-search-for-woocommerce' ),
 			'type'     => 'select',
 			'position' => 20,
 		);
@@ -900,7 +932,7 @@ class Async {
 		 * @param array $filters     Product filters
 		 * @param string $lang_code  Lang code
 		 */
-		return (array) apply_filters( 'se_get_get_product_filters', $filters, $lang_code );
+		return (array) apply_filters( 'searchanise_get_get_product_filters', $filters, $lang_code );
 	}
 
 	/**
@@ -965,7 +997,7 @@ class Async {
 		 * @param object $attr            Original taxonomy attribute.
 		 * @param $lang_code              Lang code.
 		 */
-		return (array) apply_filters( 'se_generate_filter_from_attribute', $filter, $attr, $lang_code );
+		return (array) apply_filters( 'searchanise_generate_filter_from_attribute', $filter, $attr, $lang_code );
 	}
 
 	/**
@@ -999,7 +1031,7 @@ class Async {
 		 * @param array $product_tags Product tags
 		 * @param string $lang_code   Lang code
 		 */
-		return (array) apply_filters( 'se_get_product_tags', $product_tags, $lang_code );
+		return (array) apply_filters( 'searchanise_get_product_tags', $product_tags, $lang_code );
 	}
 
 	/**
@@ -1186,7 +1218,7 @@ class Async {
 		 *
 		 * @param array $sortable_attributes Sortable attributes list
 		 */
-		return (array) apply_filters( 'se_get_sortable_attributes', $sortable_attributes );
+		return (array) apply_filters( 'searchanise_get_sortable_attributes', $sortable_attributes );
 	}
 
 	/**
@@ -1209,7 +1241,7 @@ class Async {
 		 * @param int|null $image_id  Attachment ID
 		 * @param int      $size      Image size
 		 */
-		$image_url = apply_filters( 'se_get_product_image_pre', $image_url, $image_id, $size );
+		$image_url = apply_filters( 'searchanise_get_product_image_pre', $image_url, $image_id, $size );
 
 		if ( empty( $image_url ) && ! empty( $image_id ) && ! empty( $size ) ) {
 			if ( Api::get_instance()->use_direct_image_links() ) {
@@ -1236,7 +1268,7 @@ class Async {
 		 * @param int|null $image_id  Attachment ID.
 		 * @param int      $size      Image size.
 		 */
-		return apply_filters( 'se_get_product_image_post', $image_url, $image_id, $size );
+		return apply_filters( 'searchanise_get_product_image_post', $image_url, $image_id, $size );
 	}
 
 	/**
@@ -1276,7 +1308,7 @@ class Async {
 		 *
 		 * @param array $user_groups User groups
 		 */
-		return (array) apply_filters( 'se_get_usergroups', $user_groups );
+		return (array) apply_filters( 'searchanise_get_usergroups', $user_groups );
 	}
 
 	/**
@@ -1294,7 +1326,7 @@ class Async {
 		 *
 		 * @param bool $is_usergroup_prices_available Usergroup price availability
 		 */
-		return (bool) apply_filters( 'se_is_usergroup_prices_available', $is_usergroup_prices_available );
+		return (bool) apply_filters( 'searchanise_is_usergroup_prices_available', $is_usergroup_prices_available );
 	}
 
 	/**
@@ -1321,29 +1353,29 @@ class Async {
 		$prices              = $this->generate_product_prices( $product_data, $children_products, $lang_code );
 		$entry['price']      = array(
 			'value' => (float) $prices['price'],
-			'title' => __( 'Price', 'woocommerce' ),
+			'title' => __( 'Price', 'smart-search-for-woocommerce' ),
 			'type'  => 'float',
 		);
 		$entry['list_price'] = array(
 			'value' => (float) $prices['regular_price'],
-			'title' => __( 'Regular price', 'woocommerce' ),
+			'title' => __( 'Regular price', 'smart-search-for-woocommerce' ),
 			'type'  => 'float',
 		);
 		$entry['sale_price'] = array(
 			'value' => (float) $prices['sale_price'],
-			'title' => __( 'Sale price', 'woocommerce' ),
+			'title' => __( 'Sale price', 'smart-search-for-woocommerce' ),
 			'type'  => 'float',
 		);
 		$entry['max_price']  = array(
 			'value' => (float) $prices['max_price'],
-			'title' => __( 'Max price', 'woocommerce' ),
+			'title' => __( 'Max price', 'smart-search-for-woocommerce' ),
 			'type'  => 'float',
 		);
 
 		if ( isset( $prices['max_discount'] ) ) {
 			$entry['discount'] = array(
 				'value' => (int) round( $prices['max_discount'] ),
-				'title' => __( 'Discount', 'woocommerce' ),
+				'title' => __( 'Discount', 'smart-search-for-woocommerce' ),
 				'type'  => 'int',
 			);
 		}
@@ -1357,19 +1389,19 @@ class Async {
 
 				$entry[ Api::LABEL_FOR_PRICES_USERGROUP . $role ] = array(
 					'value' => (float) $prices['price'],
-					'title' => __( 'Price for ', 'woocommerce-searchanise' ) . $role,
+					'title' => __( 'Price for ', 'smart-search-for-woocommerce' ) . $role,
 					'type'  => 'float',
 				);
 
 				$entry[ Api::LABEL_FOR_MAX_PRICES_USERGROUP . $role ] = array(
 					'value' => (float) $prices['max_price'],
-					'title' => __( 'Max price for ', 'woocommerce-searchanise' ) . $role,
+					'title' => __( 'Max price for ', 'smart-search-for-woocommerce' ) . $role,
 					'type'  => 'float',
 				);
 
 				$entry[ Api::LABEL_FOR_LIST_PRICES_USERGROUP . $role ] = array(
 					'value' => (float) $prices['regular_price'],
-					'title' => __( 'Regular price ', 'woocommerce-searchanise' ) . $role,
+					'title' => __( 'Regular price ', 'smart-search-for-woocommerce' ) . $role,
 					'type'  => 'float',
 				);
 
@@ -1490,7 +1522,7 @@ class Async {
 		 * @param array $children_products Product children (for grouped product)
 		 * @param string $lang_code        Lang code
 		 */
-		return (array) apply_filters( 'se_generate_product_prices', $prices, $product_data, $children_products, $lang_code );
+		return (array) apply_filters( 'searchanise_generate_product_prices', $prices, $product_data, $children_products, $lang_code );
 	}
 
 	/**
@@ -1578,11 +1610,11 @@ class Async {
 		 *
 		 * @since 1.0.0
 		 *
-		 * @param array $usergroup_ids     Product usergroup ids
-		 * @param WC_product $product_data Product data
-		 * @param $lang_code               Lang code
+		 * @param array       $usergroup_ids  Product usergroup ids
+		 * @param \WC_product $product_data   Product data
+		 * @param $lang_code                  Lang code
 		 */
-		return (array) apply_filters( 'se_product_usergroup_ids', $usergroup_ids, $product_data, $lang_code );
+		return (array) apply_filters( 'searchanise_product_usergroup_ids', $usergroup_ids, $product_data, $lang_code );
 	}
 
 	/**
@@ -1648,90 +1680,90 @@ class Async {
 		// Fix for gift-wrapper-for-woocommerce module.
 		if ( class_exists( 'GTW_Frontend', false ) ) {
 			global $product;
-			$product = $product_data;
+			$product = $product_data; // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 		}
 
 		$entry = array(
 			'id'                => array(
 				'value' => $product_data->get_id(),
-				'title' => __( 'product Id', 'woocommerce-searchanise' ),
+				'title' => __( 'product Id', 'smart-search-for-woocommerce' ),
 			),
 			'title'             => array(
 				'value'  => $product_data->get_name(),
-				'title'  => __( 'Product Title', 'woocommerce' ),
+				'title'  => __( 'Product Title', 'smart-search-for-woocommerce' ),
 				'weight' => self::WEIGHT_SHORT_TITLE,
 			),
 			'slug'              => array(
 				'value' => $product_data->get_slug(),
-				'title' => __( 'Slug', 'woocommerce' ),
+				'title' => __( 'Slug', 'smart-search-for-woocommerce' ),
 			),
 			'summary'           => array(
 				'value' => $this->remove_content_noise( $product_data->get_short_description() != '' ? $product_data->get_short_description() : $product_data->get_description() ),
-				'title' => __( 'Summary', 'woocommerce-searchanise' ),
+				'title' => __( 'Summary', 'smart-search-for-woocommerce' ),
 			),
 			'product_type'      => array(
 				'value' => $product_data->get_type(),
-				'title' => __( 'Product Type', 'woocommerce' ),
+				'title' => __( 'Product Type', 'smart-search-for-woocommerce' ),
 			),
 			'link'              => array(
 				'value' => Api::get_instance()->get_language_link( $product_data->get_permalink(), $lang_code ),
-				'title' => __( 'Product URL', 'woocommerce-searchanise' ),
+				'title' => __( 'Product URL', 'smart-search-for-woocommerce' ),
 			),
 			'product_code'      => array(
 				'value'  => $product_data->get_sku(),
-				'title'  => __( 'SKU', 'woocommerce' ),
+				'title'  => __( 'SKU', 'smart-search-for-woocommerce' ),
 				'weight' => self::WEIGHT_SHORT_TITLE,
 			),
 			'visibility'        => array(
 				'value' => $product_data->get_catalog_visibility(), // visible | catalog | search | hidden.
-				'title' => __( 'Visibility', 'woocommerce' ),
+				'title' => __( 'Visibility', 'smart-search-for-woocommerce' ),
 			),
 			'status'            => array(
 				'value' => $product_data->get_status(), // published, trash, private, ...
-				'title' => __( 'Status', 'woocommerce' ),
+				'title' => __( 'Status', 'smart-search-for-woocommerce' ),
 			),
 			'image_link'        => array(
-				'title' => __( 'Image link', 'woocommerce-searchanise' ),
+				'title' => __( 'Image link', 'smart-search-for-woocommerce' ),
 			),
 			'needs_shipping'    => array(
 				'value' => $product_data->needs_shipping() ? 'N' : 'Y',
-				'title' => __( 'Free shipping', 'woocommerce' ),
+				'title' => __( 'Free shipping', 'smart-search-for-woocommerce' ),
 			),
 			'sold_individually' => array(
 				'value' => $product_data->get_sold_individually() ? 'Y' : 'N',
-				'title' => __( 'Sold individually', 'woocommerce' ),
+				'title' => __( 'Sold individually', 'smart-search-for-woocommerce' ),
 			),
 			'virtual'           => array(
 				'value' => $product_data->get_virtual() ? 'Y' : 'N',
-				'title' => __( 'Virutal', 'woocommerce' ),
+				'title' => __( 'Virutal', 'smart-search-for-woocommerce' ),
 			),
 			'downloadable'      => array(
 				'value' => $product_data->get_downloadable() ? 'Y' : 'N',
-				'title' => __( 'Downloadable', 'woocommerce' ),
+				'title' => __( 'Downloadable', 'smart-search-for-woocommerce' ),
 			),
 			'menu_order'        => array(
 				'value' => $product_data->get_menu_order(),
-				'title' => __( 'Menu order', 'woocommerce' ),
+				'title' => __( 'Menu order', 'smart-search-for-woocommerce' ),
 				'type'  => 'int',
 			),
 			'weight'            => array(
 				'value' => (float) $product_data->get_weight(),
-				'title' => __( 'Weight', 'woocommerce' ),
+				'title' => __( 'Weight', 'smart-search-for-woocommerce' ),
 				'type'  => 'float',
 			),
 			'length'            => array(
 				'value' => (float) $product_data->get_length(),
-				'title' => __( 'Length', 'woocommerce' ),
+				'title' => __( 'Length', 'smart-search-for-woocommerce' ),
 				'type'  => 'float',
 			),
 			'width'             => array(
 				'value' => (float) $product_data->get_width(),
-				'title' => __( 'Width', 'woocommerce' ),
+				'title' => __( 'Width', 'smart-search-for-woocommerce' ),
 				'type'  => 'float',
 			),
 			'height'            => array(
 				'value' => (float) $product_data->get_height(),
-				'title' => __( 'Height', 'woocommerce' ),
+				'title' => __( 'Height', 'smart-search-for-woocommerce' ),
 				'type'  => 'float',
 			),
 		);
@@ -1786,7 +1818,7 @@ class Async {
 			if ( ! empty( $variants ) && self::SEND_VARIATIONS ) {
 				$entry['woocommerce_variants'] = array(
 					'name'  => 'woocommerce_variants',
-					'title' => __( 'WooCommerce variants', 'woocommerce-searchanise' ),
+					'title' => __( 'WooCommerce variants', 'smart-search-for-woocommerce' ),
 					'value' => $variants,
 				);
 			}
@@ -1794,7 +1826,7 @@ class Async {
 			// Grouped data.
 			if ( ! empty( $variants_skus ) ) {
 				$entry['se_grouped_product_code'] = array(
-					'title'       => __( 'SKU', 'woocommerce' ) . ' - Grouped',
+					'title'       => __( 'SKU', 'smart-search-for-woocommerce' ) . ' - Grouped',
 					'weight'      => self::WEIGHT_SHORT_TITLE,
 					'value'       => $this->filter_grouped_values( $variants_skus ),
 					'text_search' => 'Y',
@@ -1803,7 +1835,7 @@ class Async {
 
 			if ( ! empty( $variants_descriptions ) ) {
 				$entry['se_grouped_short_description'] = array(
-					'title'       => __( 'Product short description', 'woocommerce' ) . ' - Grouped',
+					'title'       => __( 'Product short description', 'smart-search-for-woocommerce' ) . ' - Grouped',
 					'weight'      => self::WEIGHT_DESCRIPTION_GROUPED,
 					'value'       => $this->filter_grouped_values( $variants_descriptions ),
 					'text_search' => 'Y',
@@ -1822,7 +1854,7 @@ class Async {
 			// Grouped data.
 			if ( ! empty( $child_skus ) ) {
 				$entry['se_grouped_product_code'] = array(
-					'title'       => __( 'SKU', 'woocommerce' ) . ' - Grouped',
+					'title'       => __( 'SKU', 'smart-search-for-woocommerce' ) . ' - Grouped',
 					'weight'      => self::WEIGHT_SHORT_TITLE,
 					'value'       => $this->filter_grouped_values( $child_skus ),
 					'text_search' => 'Y',
@@ -1831,7 +1863,7 @@ class Async {
 
 			if ( ! empty( $child_short_descriptions ) ) {
 				$entry['se_grouped_short_description'] = array(
-					'title'       => __( 'Product short description', 'woocommerce' ) . ' - Grouped',
+					'title'       => __( 'Product short description', 'smart-search-for-woocommerce' ) . ' - Grouped',
 					'weight'      => self::WEIGHT_DESCRIPTION_GROUPED,
 					'value'       => $this->filter_grouped_values( $child_short_descriptions ),
 					'text_search' => 'Y',
@@ -1840,7 +1872,7 @@ class Async {
 
 			if ( ! empty( $child_full_descriptions ) ) {
 				$entry['se_grouped_full_description'] = array(
-					'title'       => __( 'Product description', 'woocommerce' ) . ' - Grouped',
+					'title'       => __( 'Product description', 'smart-search-for-woocommerce' ) . ' - Grouped',
 					'weight'      => self::WEIGHT_DESCRIPTION_GROUPED,
 					'value'       => $this->filter_grouped_values( $child_full_descriptions ),
 					'text_search' => 'Y',
@@ -1885,7 +1917,7 @@ class Async {
 				if ( ! empty( $gallery_images ) ) {
 					$entry['woocommerce_images'] = array(
 						'value' => $gallery_images,
-						'title' => __( 'Product images', 'woocommerce' ),
+						'title' => __( 'Product images', 'smart-search-for-woocommerce' ),
 					);
 				}
 			}
@@ -1895,7 +1927,7 @@ class Async {
 		if ( $product_data->get_short_description() != '' && $product_data->get_description() != '' ) {
 			$entry['full_description'] = array(
 				'name'        => 'full_description',
-				'title'       => __( 'Product description', 'woocommerce' ),
+				'title'       => __( 'Product description', 'smart-search-for-woocommerce' ),
 				'text_search' => 'Y',
 				'weight'      => self::WEIGHT_DESCRIPTION,
 				'value'       => $this->remove_content_noise( $product_data->get_description() ),
@@ -1905,12 +1937,12 @@ class Async {
 		// Adds stock data.
 		$entry['quantity']     = array(
 			'value' => $this->get_product_quantity( $product_data, isset( $children ) ? $children : array() ),
-			'title' => __( 'Stock quantity', 'woocommerce' ),
+			'title' => __( 'Stock quantity', 'smart-search-for-woocommerce' ),
 			'type'  => 'int',
 		);
 		$entry['stock_status'] = array(
 			'name'  => 'stock_status',
-			'title' => __( 'Stock status', 'woocommerce' ),
+			'title' => __( 'Stock status', 'smart-search-for-woocommerce' ),
 			'value' => $this->get_stock_status( $product_data, $lang_code ),
 		);
 		$entry['is_in_stock']  = array(
@@ -1945,7 +1977,7 @@ class Async {
 		if ( $created instanceof \WC_DateTime ) {
 			$entry['created'] = array(
 				'value' => $created->getTimestamp(),
-				'title' => __( 'Created at', 'woocommerce' ),
+				'title' => __( 'Created at', 'smart-search-for-woocommerce' ),
 				'type'  => 'int',
 			);
 		}
@@ -1953,7 +1985,7 @@ class Async {
 		if ( $modified instanceof \WC_DateTime ) {
 			$entry['modified'] = array(
 				'value' => $modified->getTimestamp(),
-				'title' => __( 'Updated at', 'woocommerce' ),
+				'title' => __( 'Updated at', 'smart-search-for-woocommerce' ),
 				'type'  => 'int',
 			);
 		}
@@ -1962,7 +1994,7 @@ class Async {
 		$tag_ids = $product_data->get_tag_ids();
 		if ( ! empty( $tag_ids ) ) {
 			$entry['tags'] = array(
-				'title'       => __( 'Product tags', 'woocommerce' ),
+				'title'       => __( 'Product tags', 'smart-search-for-woocommerce' ),
 				'type'        => 'text',
 				'text_search' => 'Y',
 				'weight'      => self::WEIGHT_TAGS,
@@ -1974,11 +2006,11 @@ class Async {
 		if ( 'yes' === get_option( 'woocommerce_enable_reviews', 'yes' ) && $product_data->get_reviews_allowed() ) {
 			$entry['total_reviews']         = array(
 				'value' => (int) $product_data->get_review_count(),
-				'title' => __( 'Total reviews', 'woocommerce-searchanise' ),
+				'title' => __( 'Total reviews', 'smart-search-for-woocommerce' ),
 			);
 			$entry['reviews_average_score'] = array(
 				'value' => (float) round( $product_data->get_average_rating(), 1 ),
-				'title' => __( 'Average reviews score', 'woocommerce-searchanise' ),
+				'title' => __( 'Average reviews score', 'smart-search-for-woocommerce' ),
 			);
 		}
 
@@ -1987,7 +2019,7 @@ class Async {
 		if ( ! empty( $category_ids ) ) {
 			$entry['category_ids'] = array(
 				'name'        => 'category_ids',
-				'title'       => __( 'Categories', 'woocommerce' ) . ' - IDs',
+				'title'       => __( 'Categories', 'smart-search-for-woocommerce' ) . ' - IDs',
 				'value'       => $category_ids,
 				'weight'      => 0,
 				'text_search' => 'N',
@@ -1996,7 +2028,7 @@ class Async {
 
 			$entry['categories'] = array(
 				'value'       => $this->get_product_terms( $category_ids, 'product_cat', $lang_code ),
-				'title'       => __( 'Categories', 'woocommerce' ),
+				'title'       => __( 'Categories', 'smart-search-for-woocommerce' ),
 				'text_search' => 'Y',
 				'weight'      => self::WEIGHT_CATEGORIES,
 				'type'        => 'text',
@@ -2006,7 +2038,7 @@ class Async {
 		// Adds sales data.
 		$entry['sales_amount'] = array(
 			'name'        => 'sales_amount',
-			'title'       => __( 'Sales amount', 'woocommerce' ),
+			'title'       => __( 'Sales amount', 'smart-search-for-woocommerce' ),
 			'text_search' => 'N',
 			'type'        => 'int',
 			'value'       => (int) get_post_meta( $product_data->get_id(), 'total_sales', true ),
@@ -2018,7 +2050,7 @@ class Async {
 		if ( ! empty( $usergroup_ids ) ) {
 			$entry['usergroup_ids'] = array(
 				'name'        => 'usergroup_ids',
-				'title'       => __( 'User role', 'woocommerce' ) . ' - IDs',
+				'title'       => __( 'User role', 'smart-search-for-woocommerce' ) . ' - IDs',
 				'text_search' => 'N',
 				'value'       => $usergroup_ids,
 			);
@@ -2030,7 +2062,7 @@ class Async {
 		// Add to cart functionality.
 		$entry['add_to_cart_url'] = array(
 			'name'        => 'add_to_cart_url',
-			'title'       => __( 'Add to cart url', 'woocommerce' ),
+			'title'       => __( 'Add to cart url', 'smart-search-for-woocommerce' ),
 			'text_search' => 'N',
 			'sorting'     => 'N',
 			'filter_type' => 'none',
@@ -2041,21 +2073,21 @@ class Async {
 		// Adds upsell & crossell & related products for Recommendations.
 		$entry['cross_sell_product_ids'] = array(
 			'name'        => 'cross_sell_product_ids',
-			'title'       => __( 'Cross-Sell Products', 'woocommerce' ) . ' - IDs',
+			'title'       => __( 'Cross-Sell Products', 'smart-search-for-woocommerce' ) . ' - IDs',
 			'filter_type' => 'none',
 			'value'       => $product_data->get_cross_sell_ids(),
 		);
 
 		$entry['up_sell_product_ids'] = array(
 			'name'        => 'up_sell_product_ids',
-			'title'       => __( 'Up-Sell Products', 'woocommerce' ) . ' - IDs',
+			'title'       => __( 'Up-Sell Products', 'smart-search-for-woocommerce' ) . ' - IDs',
 			'filter_type' => 'none',
 			'value'       => $product_data->get_upsell_ids(),
 		);
 
 		$entry['related_product_ids'] = array(
 			'name'        => 'related_product_ids',
-			'title'       => __( 'Related Products', 'woocommerce' ) . ' - IDs',
+			'title'       => __( 'Related Products', 'smart-search-for-woocommerce' ) . ' - IDs',
 			'filter_type' => 'none',
 			'value'       => $this->get_related_product_ids( $product_data ),
 		);
@@ -2063,7 +2095,7 @@ class Async {
 		// Adds also bought products for Recommendations.
 		$entry['also_bought_product_ids'] = array(
 			'name'        => 'also_bought_product_ids',
-			'title'       => __( 'Also bought product', 'woocommerce' ) . ' - IDs',
+			'title'       => __( 'Also bought product', 'smart-search-for-woocommerce' ) . ' - IDs',
 			'filter_type' => 'none',
 			'value'       => implode( ',', $product_data->also_bought_product_ids ),
 		);
@@ -2106,7 +2138,7 @@ class Async {
 		 * @param \WC_Product        Original product data
 		 * @param string $lang_code Lang code
 		 */
-		return (array) apply_filters( 'se_prepare_product_data', $entry, $product_data, $lang_code );
+		return (array) apply_filters( 'searchanise_prepare_product_data', $entry, $product_data, $lang_code );
 	}
 
 	/**
@@ -2257,14 +2289,14 @@ class Async {
 		 * @param array $meta_data Product metadata
 		 * @param string $lang_code Lang code
 		 */
-		$meta_data = apply_filters( 'se_prepare_product_meta_data', $meta_data, $lang_code );
+		$meta_data = apply_filters( 'searchanise_prepare_product_meta_data', $meta_data, $lang_code );
 
 		// Prepare data.
 		$entry = array();
 		if ( ! empty( $meta_data['meta_title'] ) ) {
 			$entry['meta_title'] = array(
 				'value'       => array_map( 'trim', array_unique( $meta_data['meta_title'] ) ),
-				'title'       => __( 'Meta title', 'woocommerce-searchanise' ),
+				'title'       => __( 'Meta title', 'smart-search-for-woocommerce' ),
 				'text_search' => 'Y',
 				'weight'      => self::WEIGHT_META_TITLE,
 			);
@@ -2273,7 +2305,7 @@ class Async {
 		if ( ! empty( $meta_data['meta_description'] ) ) {
 			$entry['meta_description'] = array(
 				'value'       => array_map( 'strip_tags', array_map( 'trim', array_unique( $meta_data['meta_description'] ) ) ),
-				'title'       => __( 'Meta description', 'woocommerce-searchanise' ),
+				'title'       => __( 'Meta description', 'smart-search-for-woocommerce' ),
 				'text_search' => 'Y',
 				'weight'      => self::WEIGHT_META_DESCRIPTION,
 			);
@@ -2282,7 +2314,7 @@ class Async {
 		if ( ! empty( $meta_data['meta_keywords'] ) ) {
 			$entry['meta_keywords'] = array(
 				'value'       => array_map( 'trim', array_unique( $meta_data['meta_keywords'] ) ),
-				'title'       => __( 'Meta keywords', 'woocommerce-searchanise' ),
+				'title'       => __( 'Meta keywords', 'smart-search-for-woocommerce' ),
 				'text_search' => 'Y',
 				'weight'      => self::WEIGHT_META_KEYWORDS,
 			);
@@ -2329,7 +2361,7 @@ class Async {
 			 * @param object $attr           Taxonomy attribute
 			 * @param string $lang_code      Lang code
 			 */
-			$attribute_data = (array) apply_filters( 'se_generate_taxonomy_attribute', $attribute_data, $attr, $lang_code );
+			$attribute_data = (array) apply_filters( 'searchanise_generate_taxonomy_attribute', $attribute_data, $attr, $lang_code );
 			$entry[ self::get_taxonomy_id( $taxonomy_object->attribute_name ) ] = $attribute_data;
 
 		} else {
@@ -2352,7 +2384,7 @@ class Async {
 				 * @param object $attr           Attribute
 				 * @param string $lang_code      Lang code
 				 */
-				$entry[ $attribute_id ] = (array) apply_filters( 'se_generate_simple_attribute', $attribute_data, $attr, $lang_code );
+				$entry[ $attribute_id ] = (array) apply_filters( 'searchanise_generate_simple_attribute', $attribute_data, $attr, $lang_code );
 			}
 		}
 	}
@@ -2411,9 +2443,9 @@ class Async {
 		 * @since 1.0.0
 		 *
 		 * @param string $stock_status Stock status name
-		 * @param \WC_Product           Product data
+		 * @param \WC_Product          Product data
 		 */
-		return apply_filters( 'se_get_stock_status', $stock_status, $product );
+		return apply_filters( 'searchanise_get_stock_status', $stock_status, $product );
 	}
 
 	/**
@@ -2459,7 +2491,7 @@ class Async {
 		 * @param int         $quantity  Product quantity
 		 * @param  \WC_Product $product   Product data
 		 */
-		return (int) apply_filters( 'se_get_product_quanity', $quantity, $product );
+		return (int) apply_filters( 'searchanise_get_product_quanity', $quantity, $product );
 	}
 
 	/**
@@ -2498,7 +2530,7 @@ class Async {
 		 *
 		 * @param array $products Products list
 		 */
-		$products = (array) apply_filters( 'se_get_products_additional', $products );
+		$products = (array) apply_filters( 'searchanise_get_products_additional', $products );
 	}
 
 	/**
@@ -2529,7 +2561,7 @@ class Async {
 					 *
 					 * @since 1.0.0
 					 */
-					$terms[] = (string) apply_filters( 'se_get_product_term_name', wp_specialchars_decode( $term->name ), $term, $lang_code );
+					$terms[] = (string) apply_filters( 'searchanise_get_product_term_name', wp_specialchars_decode( $term->name ), $term, $lang_code );
 				}
 			}
 		}
@@ -2552,6 +2584,8 @@ class Async {
 		$pid     = array_map( 'intval', $product_ids );
 
 		// Fetch all order for products.
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
 		$_all_orders = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT
@@ -2565,6 +2599,7 @@ class Async {
 			),
 			ARRAY_A
 		);
+		// phpcs:enable
 
 		$all_orders     = array();
 		$all_orders_ids = array();
@@ -2578,6 +2613,8 @@ class Async {
 			$all_orders_ids = array_map( 'intval', $all_orders_ids );
 
 			// Fetch all order items for selected orders.
+			// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+			// phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
 			$all_orders_products  = array();
 			$_all_orders_products = $wpdb->get_results(
 				$wpdb->prepare(
@@ -2591,6 +2628,8 @@ class Async {
 				),
 				ARRAY_A
 			);
+			// phpcs:enable
+
 			foreach ( $_all_orders_products as $data ) {
 				$all_orders_products[ $data['order_id'] ][] = $data['product_id'];
 			}
@@ -2674,7 +2713,7 @@ class Async {
 			 * @param object $cat          Original category
 			 * @param string $lang_code    Lang code
 			 */
-			$data[] = (array) apply_filters( 'se_get_category_data', $category_data, $cat, $lang_code );
+			$data[] = (array) apply_filters( 'searchanise_get_category_data', $category_data, $cat, $lang_code );
 		}
 
 		$categories_data = array( 'categories' => $data );
@@ -2728,11 +2767,11 @@ class Async {
 				 *
 				 * @since 1.0.0
 				 *
-				 * @param array $page_data  Prepared page data
-				 * @param WP_Post $post     Page data
-				 * @param string $lang_code Lang code
+				 * @param array $page_data   Prepared page data
+				 * @param \WP_Post $post     Page data
+				 * @param string $lang_code  Lang code
 				 */
-				$data[] = (array) apply_filters( 'se_get_page_data', $page_data, $post, $lang_code );
+				$data[] = (array) apply_filters( 'searchanise_get_page_data', $page_data, $post, $lang_code );
 			}
 		}
 
@@ -2835,7 +2874,7 @@ class Async {
 		 *
 		 * @param array $excluded_pages
 		 */
-		return (array) apply_filters( 'se_get_excluded_pages', $excluded_pages );
+		return (array) apply_filters( 'searchanise_get_excluded_pages', $excluded_pages );
 	}
 
 	/**
@@ -2857,7 +2896,7 @@ class Async {
 		 *
 		 * @param array $excluded_categories
 		 */
-		return (array) apply_filters( 'se_get_excluded_categories', $excluded_categories );
+		return (array) apply_filters( 'searchanise_get_excluded_categories', $excluded_categories );
 	}
 
 	/**
@@ -2873,23 +2912,23 @@ class Async {
 	 */
 	public static function ajax_async() {
 		if ( Api::get_instance()->get_module_status() != 'Y' ) {
-			wp_die( esc_html( __( 'Searchanise module not enabled', 'woocommerce-searchanise' ) ) );
+			wp_die( esc_html( __( 'Searchanise module not enabled', 'smart-search-for-woocommerce' ) ) );
 		}
 
-		$lang_code = ! empty( $_REQUEST[ self::FL_LANG_CODE ] ) ? sanitize_key( $_REQUEST[ self::FL_LANG_CODE ] ) : null;
+		$lang_code = ! empty( $_REQUEST[ self::FL_LANG_CODE ] ) ? sanitize_key( wp_unslash( $_REQUEST[ self::FL_LANG_CODE ] ) ) : null; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
 		if ( $lang_code && ! Api::get_instance()->check_private_key( $lang_code ) ) {
-			wp_die( esc_html( __( 'Invalid private key', 'woocommerce-searchanise' ) ) );
+			wp_die( esc_html( __( 'Invalid private key', 'smart-search-for-woocommerce' ) ) );
 		}
 
-		$fl_ignore_processing = ! empty( $_REQUEST[ self::FL_IGNORE_PROCESSING ] ) && self::FL_IGNORE_PROCESSING_KEY == $_REQUEST[ self::FL_IGNORE_PROCESSING ];
-		$fl_show_status       = ! empty( $_REQUEST[ self::FL_SHOW_STATUS_ASYNC ] ) && self::FL_SHOW_STATUS_ASYNC_KEY == $_REQUEST[ self::FL_SHOW_STATUS_ASYNC ];
+		$fl_ignore_processing = isset( $_REQUEST[ self::FL_IGNORE_PROCESSING ] ) && self::FL_IGNORE_PROCESSING_KEY == $_REQUEST[ self::FL_IGNORE_PROCESSING ]; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$fl_show_status       = isset( $_REQUEST[ self::FL_SHOW_STATUS_ASYNC ] ) && self::FL_SHOW_STATUS_ASYNC_KEY == $_REQUEST[ self::FL_SHOW_STATUS_ASYNC ]; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
 		$status = self::get_instance()->async( $lang_code, $fl_ignore_processing );
 
 		if ( $fl_show_status ) {
 			/* translators: status */
-			echo esc_html( sprintf( __( 'Searchanise status sync: %s', 'woocommerce-searchanise' ), $status ) );
+			echo esc_html( sprintf( __( 'Searchanise status sync: %s', 'smart-search-for-woocommerce' ), $status ) );
 		}
 
 		wp_die();
@@ -2926,7 +2965,7 @@ class Async {
 	 * Generate custom attribite taxonomies
 	 *
 	 * @param array  $entry      Searchanise data.
-	 * @param object $attributes Custom attributes.
+	 * @param array  $attributes Custom attributes.
 	 * @param object $data       Product data.
 	 * @param string $lang_code  Lang code.
 	 *
@@ -2981,7 +3020,7 @@ class Async {
 	/**
 	 * Get value options for custom attributes
 	 *
-	 * @param object $terms     Terms object.
+	 * @param array  $terms     Terms object.
 	 * @param string $lang_code Lang code.
 	 *
 	 * @return array options
@@ -3037,7 +3076,7 @@ class Async {
 		 * @param array  $content
 		 * @param string $lang_code
 		 */
-		return apply_filters( 'se_get_translate', $content, $lang_code );
+		return apply_filters( 'searchanise_get_translate', $content, $lang_code );
 	}
 
 	/**
@@ -3071,6 +3110,8 @@ class Async {
 	public function get_meta_product_types() {
 		global $wpdb;
 
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
 		return $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT
@@ -3087,5 +3128,6 @@ class Async {
 				'\_%'
 			)
 		);
+		// phpcs:enable
 	}
 }

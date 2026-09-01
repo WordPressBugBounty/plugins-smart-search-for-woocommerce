@@ -94,6 +94,9 @@ class Upgrade {
 
 		Api::get_instance()->set_system_setting( 'use_direct_image_links', $use_direct_image_links );
 
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.SchemaChange
 		// Add error column.
 		$table_queue_columns = $wpdb->get_col( "SHOW COLUMNS FROM {$wpdb->prefix}wc_se_queue" );
 
@@ -142,6 +145,7 @@ class Upgrade {
 				wp_delete_post( $id, true );
 			}
 		}
+		// phpcs:enable
 
 		return true;
 	}
@@ -155,11 +159,15 @@ class Upgrade {
 		$default_locale = Api::get_instance()->get_default_locale();
 
 		// Update database structure.
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.SchemaChange
 		$wpdb->query( "ALTER TABLE {$wpdb->prefix}wc_se_settings CHANGE `lang_code` `lang_code` CHAR(8) NOT NULL DEFAULT 'default'" );
 		$wpdb->query( "ALTER TABLE {$wpdb->prefix}wc_se_queue CHANGE `lang_code` `lang_code` CHAR(8) NOT NULL DEFAULT 'default'" );
 
 		// Update locale settings.
 		$wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->prefix}wc_se_settings SET lang_code = %s WHERE lang_code = %s", 'default', $default_locale ) );
+		// phpcs:enable
 
 		// Upgrade setting import block post.
 		Api::get_instance()->set_system_setting( 'import_block_posts', 'N' );

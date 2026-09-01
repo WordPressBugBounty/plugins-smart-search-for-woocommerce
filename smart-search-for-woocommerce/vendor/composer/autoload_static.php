@@ -4,8 +4,12 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInitc94333023e4664f8ca364ea4ee73fe57
+class ComposerStaticInit44b46e9733303fa3318340443b80af03
 {
+    public static $files = array (
+        '8262cd5813bb22d6c407f07326f1ef08' => __DIR__ . '/../..' . '/includes/functions.php',
+    );
+
     public static $prefixLengthsPsr4 = array (
         'C' => 
         array (
@@ -43,6 +47,8 @@ class ComposerStaticInitc94333023e4664f8ca364ea4ee73fe57
         'Searchanise\\SmartWoocommerceSearch\\Profiler' => __DIR__ . '/../..' . '/includes/helpers/class-profiler.php',
         'Searchanise\\SmartWoocommerceSearch\\Queue' => __DIR__ . '/../..' . '/includes/queue/class-queue.php',
         'Searchanise\\SmartWoocommerceSearch\\Recommendations' => __DIR__ . '/../..' . '/includes/widgets/class-recommendations.php',
+        'Searchanise\\SmartWoocommerceSearch\\Search_Filter_Params_DTO' => __DIR__ . '/../..' . '/includes/dto/class-search-filter-params-dto.php',
+        'Searchanise\\SmartWoocommerceSearch\\Search_Filter_Params_Factory' => __DIR__ . '/../..' . '/includes/factories/class-search-filter-params-factory.php',
         'Searchanise\\SmartWoocommerceSearch\\Search_Results' => __DIR__ . '/../..' . '/includes/widgets/class-search-results.php',
         'Searchanise\\SmartWoocommerceSearch\\Searchanise_Exception' => __DIR__ . '/../..' . '/includes/exceptions/class-searchanise-exception.php',
         'Searchanise\\SmartWoocommerceSearch\\Upgrade' => __DIR__ . '/../..' . '/includes/install/class-upgrade.php',
@@ -51,9 +57,9 @@ class ComposerStaticInitc94333023e4664f8ca364ea4ee73fe57
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInitc94333023e4664f8ca364ea4ee73fe57::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInitc94333023e4664f8ca364ea4ee73fe57::$prefixDirsPsr4;
-            $loader->classMap = ComposerStaticInitc94333023e4664f8ca364ea4ee73fe57::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInit44b46e9733303fa3318340443b80af03::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInit44b46e9733303fa3318340443b80af03::$prefixDirsPsr4;
+            $loader->classMap = ComposerStaticInit44b46e9733303fa3318340443b80af03::$classMap;
 
         }, null, ClassLoader::class);
     }

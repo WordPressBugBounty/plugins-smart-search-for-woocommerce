@@ -30,6 +30,7 @@ class Admin {
 		$this->lang_code = $lang_code ? $lang_code : Api::get_instance()->get_locale();
 
 		add_action( 'admin_init', array( $this, 'init' ) );
+		add_action( 'admin_init', array( $this, 'check_gddpr_redirect' ), 9999 );
 		add_action( 'wp_loaded', array( $this, 'register' ) );
 	}
 
@@ -47,7 +48,7 @@ class Admin {
 				function () {
 					echo '<div class="notice-error notice"><p>'
 						. '<b>' . esc_html( Api::get_instance()->get_product_name() ) . '</b></p><p>'
-						. wp_kses_data( __( '<a href="https://wordpress.org/plugins/woocommerce">WooCommerce</a> plugin should be enabled to work correctly.', 'woocommerce-searchanise' ) ) . '</p></div>';
+						. wp_kses_data( __( '<a href="https://wordpress.org/plugins/woocommerce">WooCommerce</a> plugin should be enabled to work correctly.', 'smart-search-for-woocommerce' ) ) . '</p></div>';
 				}
 			);
 
@@ -59,15 +60,17 @@ class Admin {
 					function () {
 						echo '<div class="notice-error notice"><p>'
 							. '<b>' . esc_html( Api::get_instance()->get_product_name() ) . '</b></p><p>'
-							. wp_kses_data( __( 'Plugin was deactivated.', 'woocommerce-searchanise' ) ) . '</p></div>';
+							. wp_kses_data( __( 'Plugin was deactivated.', 'smart-search-for-woocommerce' ) ) . '</p></div>';
 					}
 				);
 
-				if ( isset( $_GET['activate'] ) ) {
+				if ( isset( $_GET['activate'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 					unset( $_GET['activate'] );
 				}
 			}
 		}
+
+		Installer::create_caps();
 
 		if ( $this->count_bubble_notices() ) {
 			global $submenu;
@@ -86,6 +89,24 @@ class Admin {
 	}
 
 	/**
+	 * Print reigstration error notice
+	 *
+	 * @return void
+	 */
+	public function error_register_plugin_notice() {
+		/* translators: %s: support email */
+		echo '<div class="notice-warning notice"><p>'
+			. '<b>' . esc_html( Api::get_instance()->get_product_name() ) . '</b></p><p>' . wp_kses(
+				sprintf(
+					'Unable to register plugin. Please, contact Searchanise <a href="mailto:%s">%s</a> technical support',
+					SE_SUPPORT_EMAIL,
+					SE_SUPPORT_EMAIL
+				),
+				array( 'a' => array( 'href' => array() ) )
+			) . '</p></div>';
+	}
+
+	/**
 	 * Register backend scripts
 	 */
 	public function register() {
@@ -93,9 +114,9 @@ class Admin {
 			return;
 		}
 
-		// Network activation, try to install pluging.
+		// Network activation, try to install plugin.
 		if ( is_multisite() && Api::get_instance()->get_module_status() != 'Y' ) {
-			// Network activation, try to install pluging.
+			// Network activation, try to install plugin.
 			Cron::unregister();
 
 			if ( Installer::install() ) {
@@ -103,31 +124,19 @@ class Admin {
 				add_rewrite_rule( '^searchanise/info', 'index.php?is_searchanise_page=1&post_type=page', 'top' );
 				flush_rewrite_rules();
 			} else {
-				add_action(
-					'admin_notices',
-					function () {
-						/* translators: %s: support email */
-						echo '<div class="notice-warning notice"><p>'
-							. '<b>' . esc_html( Api::get_instance()->get_product_name() ) . '</b></p><p>' . esc_html(
-								sprintf(
-									'Unable to register plugin. Please, contact Searchanise <a href="mailto:%s">%s</a> technical support',
-									SE_SUPPORT_EMAIL,
-									SE_SUPPORT_EMAIL
-								)
-							) . '</p></div>';
-					}
-				);
+				add_action( 'admin_notices', array( $this, 'error_register_plugin_notice' ) );
 			}
 		}
 
 		if ( Api::get_instance()->get_module_status() != 'Y' ) {
 			return;
 		}
+
 		if ( ! Upgrade::is_updated() ) {
 			if ( Upgrade::process_upgrade() ) {
 				$text_notification = sprintf(
 					/* translators: %s: admin panel */
-					__( 'Plugin was successfully updated. Catalog indexation in process. <a href="%s">Admin Panel</a>.', 'woocommerce-searchanise' ),
+					__( 'Plugin was successfully updated. Catalog indexation in process. <a href="%s">Admin Panel</a>.', 'smart-search-for-woocommerce' ),
 					Api::get_instance()->get_admin_url()
 				);
 
@@ -135,8 +144,8 @@ class Admin {
 					Api::get_instance()->add_admin_notitice(
 						sprintf(
 							/* translators: %s: admin panel */
-							__( 'In the new version 1.0.12 of the plugin, the settings moved from <b>Settings → Searchanise</b> to the <b><a href="%1$s">WooCommerce → Settings → Searchanise</a></b> and <br />admin panel moved from <b>Products → Searchanise</b> to <b><a href="%2$s"> Woocommerce → Searchanise</a></b>.', 'woocommerce-searchanise' ),
-							get_admin_url( null, 'admin.php?page=wc-settings&tab=searchanise_settings' ),
+							__( 'In the new version 1.0.12 of the plugin, the settings moved from <b>Settings → Searchanise</b> to the <b><a href="%1$s">WooCommerce → Settings → Searchanise</a></b> and <br />admin panel moved from <b>Products → Searchanise</b> to <b><a href="%2$s"> Woocommerce → Searchanise</a></b>.', 'smart-search-for-woocommerce' ),
+							$this->get_admin_settings_link(),
 							admin_url( 'admin.php?page=searchanise' )
 						),
 						'info'
@@ -144,37 +153,25 @@ class Admin {
 				}
 			}
 		} elseif ( Api::get_instance()->check_auto_install() ) {
-			$text_notification = sprintf(
-				/* translators: %s: admin panel */
-				__( 'Plugin was successfully installed. Catalog indexation in process. <a href="%s">Admin Panel</a>.', 'woocommerce-searchanise' ),
-				Api::get_instance()->get_admin_url()
-			);
+			if ( ! Api::get_instance()->use_gddpr_registration() ) {
+				$text_notification = sprintf(
+					/* translators: %s: admin panel */
+					__( 'Plugin was successfully installed. Catalog indexation in process. <a href="%s">Admin Panel</a>.', 'smart-search-for-woocommerce' ),
+					Api::get_instance()->get_admin_url()
+				);
+			}
 		} elseif ( Api::get_instance()->get_is_need_reindexation() ) {
 			// Full reindexation, usually used after addon activating.
 			$text_notification = sprintf(
 				/* translators: %s: admin panel */
-				__( 'Plugin was successfully activated. Catalog indexation in process. <a href="%s">Admin Panel</a>.', 'woocommerce-searchanise' ),
+				__( 'Plugin was successfully activated. Catalog indexation in process. <a href="%s">Admin Panel</a>.', 'smart-search-for-woocommerce' ),
 				Api::get_instance()->get_admin_url()
 			);
 			Api::get_instance()->set_is_need_reindexation( false );
 		}
 
 		if ( ! empty( $text_notification ) ) {
-			if ( Api::get_instance()->signup( null, false ) == true ) {
-				Api::get_instance()->queue_import( null, false );
-				Api::get_instance()->add_admin_notitice( $text_notification, 'success' );
-
-			} else {
-				Api::get_instance()->add_admin_notitice(
-					sprintf(
-						/* translators: %s: support email */
-						__( 'Something is wrong in plugin registration. Please contact Searchanise <a href="mailto:%1$s">%2$s</a> technical support', 'woocommerce-searchanise' ),
-						SE_SUPPORT_EMAIL,
-						SE_SUPPORT_EMAIL
-					),
-					'error'
-				);
-			}
+			$this->signup( $text_notification );
 		} else {
 			Api::get_instance()->show_notification_async_completed();
 		}
@@ -189,6 +186,76 @@ class Admin {
 	}
 
 	/**
+	 * Run signup
+	 *
+	 * @param string $text_notification Success notification.
+	 * @return bool
+	 */
+	public function signup( $text_notification = '' ) {
+		if ( Api::get_instance()->signup( null, false ) ) {
+			Api::get_instance()->queue_import( null, false );
+
+			if ( '' != $text_notification ) {
+				Api::get_instance()->add_admin_notitice( $text_notification, 'success' );
+			}
+
+			return true;
+		} else {
+			Api::get_instance()->add_admin_notitice(
+				sprintf(
+				/* translators: %s: support email */
+					__( 'Something is wrong in plugin registration. Please contact Searchanise <a href="mailto:%1$s">%2$s</a> technical support', 'smart-search-for-woocommerce' ),
+					SE_SUPPORT_EMAIL,
+					SE_SUPPORT_EMAIL
+				),
+				'error'
+			);
+
+			return false;
+		}
+	}
+
+	/**
+	 * Returns admin searchanise settings page link
+	 *
+	 * @return string
+	 */
+	public function get_admin_settings_link() {
+		return get_admin_url( null, 'admin.php?page=wc-settings&tab=searchanise_settings' );
+	}
+
+	/**
+	 * Checks gddpr redirect
+	 *
+	 * @return void
+	 */
+	public function check_gddpr_redirect() {
+		if ( Api::get_instance()->get_module_status() == 'Y' && Api::get_instance()->check_auto_install() && Api::get_instance()->check_gddpr_redirect() ) {
+			Api::get_instance()->set_gddpr_redirect( false );
+			$this->redirect_to_gddpr_page();
+		}
+	}
+
+	/**
+	 * Returns admin gddpr page link
+	 *
+	 * @return string
+	 */
+	public function get_admin_gddpr_link() {
+		return menu_page_url( 'searchanise-gddpr', false );
+	}
+
+	/**
+	 * Redirects to gddpr page
+	 *
+	 * @return void
+	 */
+	public function redirect_to_gddpr_page() {
+		wp_safe_redirect( $this->get_admin_gddpr_link(), 301 );
+		exit;
+	}
+
+	/**
 	 * Adds plugin links.
 	 *
 	 * @param array $links Links.
@@ -196,12 +263,11 @@ class Admin {
 	 * @return array $links with additional links
 	 */
 	public function admin_settings_link( $links ) {
-		$links[] = '<a href="' . get_admin_url( null, '/admin.php?page=searchanise' ) . '">' . __( 'Admin Panel', 'woocommerce-searchanise' ) . '</a>';
-		$links[] = '<a href="' . admin_url( 'admin.php?page=wc-settings&tab=searchanise_settings' ) . '">' . __( 'Settings', 'woocommerce-searchanise' ) . '</a>';
+		$links[] = '<a href="' . menu_page_url( 'searchanise', false ) . '">' . __( 'Admin Panel', 'smart-search-for-woocommerce' ) . '</a>';
+		$links[] = '<a href="' . $this->get_admin_settings_link() . '">' . __( 'Settings', 'smart-search-for-woocommerce' ) . '</a>';
 
 		return $links;
 	}
-
 
 	/**
 	 * Add the Searchanise Admin Panel menu items.
@@ -209,11 +275,20 @@ class Admin {
 	public function admin_menu() {
 		$admin_page = add_submenu_page(
 			'woocommerce',
-			Api::get_instance()->get_woocommerce_plugin_version() ? Api::get_instance()->get_product_name() : __( 'Searchanise', 'woocommerce-searchanise' ),
-			Api::get_instance()->get_woocommerce_plugin_version() ? Api::get_instance()->get_product_name() : __( 'Searchanise', 'woocommerce-searchanise' ),
+			Api::get_instance()->get_woocommerce_plugin_version() ? Api::get_instance()->get_product_name() : __( 'Searchanise', 'smart-search-for-woocommerce' ),
+			Api::get_instance()->get_woocommerce_plugin_version() ? Api::get_instance()->get_product_name() : __( 'Searchanise', 'smart-search-for-woocommerce' ),
 			'manage_product_terms',
 			'searchanise',
 			array( $this, 'searchanise_manage' )
+		);
+
+		$admin_optin_page = add_submenu_page(
+			null,
+			__( 'Searchanise opt-in', 'smart-search-for-woocommerce' ),
+			__( 'Searchanise opt-in', 'smart-search-for-woocommerce' ),
+			'manage_product_terms',
+			'searchanise-gddpr',
+			array( $this, 'show_gddpr_page' )
 		);
 
 		add_action( 'load-' . $admin_page, array( $this, 'load_dashboard' ) );
@@ -263,30 +338,27 @@ class Admin {
 			if ( ! Api::get_instance()->get_is_rated() ) {
 				$footer_text = sprintf(
 					/* translators: %s: review link */
-					__( 'If you like %1$s please leave us a %2$s rating. A huge thanks in advance!', 'woocommerce-searchanise' ),
+					esc_html__( 'If you like %1$s please leave us a %2$s rating. A huge thanks in advance!', 'smart-search-for-woocommerce' ),
 					sprintf( '<strong>%s</strong>', Api::get_instance()->get_product_name() ),
-					'<a href="https://wordpress.org/support/plugin/smart-search-for-woocommerce/reviews?rate=5#new-post" target="_blank" class="se-rating-link" data-rated="' . esc_attr__( 'Thanks :)', 'woocommerce-searchanise' ) . '">&#9733;&#9733;&#9733;&#9733;&#9733;</a>'
+					'<a href="https://wordpress.org/support/plugin/smart-search-for-woocommerce/reviews?rate=5#new-post" target="_blank" class="se-rating-link" data-rated="' . esc_attr__( 'Thanks :)', 'smart-search-for-woocommerce' ) . '">&#9733;&#9733;&#9733;&#9733;&#9733;</a>'
 				);
 
 				$script = "jQuery('a.se-rating-link').click( function() {
-					jQuery.get('" . admin_url( 'admin-ajax.php' ) . "', {action: 'searchanise_rated'});
+					jQuery.get('" . esc_js( admin_url( 'admin-ajax.php' ) ) . "', {action: 'searchanise_rated'});
 					jQuery(this).parent().text(jQuery(this).data('rated'));
 				});";
 
 				if ( function_exists( 'wp_add_inline_script' ) ) {
 					$searchanise_custom_handle = 'searchanise-custom-script';
-					wp_register_script( $searchanise_custom_handle, false, array( 'jquery' ), null, true );
+					wp_register_script( $searchanise_custom_handle, false, array( 'jquery' ), SE_PLUGIN_VERSION, true );
 					wp_enqueue_script( $searchanise_custom_handle );
 					wp_add_inline_script( $searchanise_custom_handle, $script );
 				} else {
 					wc_enqueue_js( $script );
 				}
 			} else {
-				$footer_text = sprintf(
-					/* translators: %s: product name */
-					__( 'Thank you for using <strong>%s</strong>.', 'woocommerce-searchanise' ),
-					Api::get_instance()->get_product_name()
-				);
+				$footer_text = esc_html__( 'Thank you for using', 'smart-search-for-woocommerce' ) .
+					' <strong>' . esc_attr( Api::get_instance()->get_product_name() ) . '</strong>.';
 			}
 		}
 
@@ -338,8 +410,8 @@ class Admin {
 		$last_resync   = Api::get_instance()->get_last_resync( $this->lang_code );
 		$service_url   = is_ssl() ? str_replace( 'http://', 'https://', SE_SERVICE_URL ) : SE_SERVICE_URL;
 
-		$se_admin_widgets_file_path = SE_BASE_DIR . '/assets/js/se-admin-widgets.js';
-		$se_options                 = array(
+		$searchanise_admin_widgets_file_path = SE_BASE_DIR . '/assets/js/se-admin-widgets.js';
+		$searchanise_options                 = array(
 			'version'             => SE_PLUGIN_VERSION,
 			'status'              => 'enabled',
 			'platform'            => SE_PLATFORM,
@@ -348,8 +420,8 @@ class Admin {
 			'host'                => $service_url,
 			'private_key'         => Api::get_instance()->get_private_key( $this->lang_code ),
 			'parent_private_key'  => Api::get_instance()->get_parent_private_key(),
-			'connect_link'        => Api::get_instance()->get_admin_url( 'signup' ),
-			're_sync_link'        => Api::get_instance()->get_admin_url( 'reindex' ),
+			'connect_link'        => Api::get_instance()->get_admin_url( 'signup', true ),
+			're_sync_link'        => Api::get_instance()->get_admin_url( 'reindex', true ),
 			'last_request'        => Api::get_instance()->format_date( $last_request ),
 			'last_resync'         => Api::get_instance()->format_date( $last_resync ),
 			'lang_code'           => $this->lang_code,
@@ -368,54 +440,109 @@ class Admin {
 		 *
 		 * @since 1.0.0
 		 *
-		 * @param string $se_admin_widgets_file_path
+		 * @param string $searchanise_admin_widgets_file_path
 		 */
-		$se_admin_widgets_file_path = apply_filters( 'se_admin_widgets_file_path', $se_admin_widgets_file_path );
+		$searchanise_admin_widgets_file_path = apply_filters( 'searchanise_admin_widgets_file_path', $searchanise_admin_widgets_file_path );
 
 		/**
 		 * Gets admin widgets options
 		 *
 		 * @since 1.0.0
 		 *
-		 * @param string $se_admin_widgets_file_path
+		 * @param array $searchanise_options
 		 */
-		$se_options = apply_filters( 'se_load_admin_widgets', $se_options );
+		$searchanise_options = apply_filters( 'searchanise_admin_load_admin_widgets', $searchanise_options );
 
-		wp_register_script( 'se_admin_widget', plugins_url( $se_admin_widgets_file_path ), array( 'jquery' ), SE_PLUGIN_VERSION, true );
-		wp_localize_script( 'se_admin_widget', 'SeOptions', $se_options );
-		wp_register_script( 'se_link', $service_url . '/js/init.js', array( 'se_admin_widget' ), SE_PLUGIN_VERSION, true );
-		wp_enqueue_style( 'se_admin_css', plugins_url( SE_BASE_DIR . '/assets/css/se-admin.css' ), array(), SE_PLUGIN_VERSION, false );
+		wp_register_script( 'searchanise-admin-widgets', plugins_url( $searchanise_admin_widgets_file_path ), array(), SE_PLUGIN_VERSION, true );
+		wp_localize_script( 'searchanise-admin-widgets', 'searchanise_options', $searchanise_options );
+		wp_register_script( 'searchanise-link', $service_url . '/js/init.js', array( 'searchanise-admin-widgets' ), SE_PLUGIN_VERSION, true );
+		wp_enqueue_style( 'searchanise-admin-css', plugins_url( SE_BASE_DIR . '/assets/css/se-admin.css' ), array(), SE_PLUGIN_VERSION, false );
 
 		return $this;
+	}
+
+	/**
+	 * Show gddpr searchanise page
+	 *
+	 * @return void
+	 */
+	public function show_gddpr_page() {
+		wp_enqueue_style( 'searchanise_admin_css', plugins_url( SE_BASE_DIR . '/assets/css/se-admin.css' ), array(), SE_PLUGIN_VERSION, false );
+		require_once SE_TEMPLATES_PATH . 'searchanise_optin.php';
 	}
 
 	/**
 	 * Searchanise manage controller
 	 */
 	public function searchanise_manage() {
-		if ( ! current_user_can( 'manage_product_terms' ) ) {
-			wp_die( esc_html__( 'Access denied.', 'woocommerce-searchanise' ) );
+		if ( ! current_user_can( 'manage_searchanise' ) ) {
+			wp_die( esc_html__( 'Access denied.', 'smart-search-for-woocommerce' ) );
 		}
 
-		$mode = isset( $_GET['mode'] ) ? htmlspecialchars( sanitize_key( $_GET['mode'] ), ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML401 ) : '';
+		if ( isset( $_GET['searchanise_mode'] ) ) {
+			// Validate the nonce.
+			if ( ! check_admin_referer( 'searchanise_action', 'searchanise_nonce' ) ) {
+				wp_die( esc_html__( 'Security check failed.', 'smart-search-for-woocommerce' ) );
+			}
 
-		if ( ! empty( $mode ) ) {
+			$mode   = sanitize_text_field( wp_unslash( $_GET['searchanise_mode'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			$action = 'action_' . mb_strtolower( $mode );
 
-			if ( method_exists( $this, $action ) ) {
+			if ( ! empty( $mode ) && method_exists( $this, $action ) ) {
 				call_user_func_array( array( $this, $action ), array() );
 				wp_safe_redirect( Api::get_instance()->get_admin_url() );
+			} else {
+				wp_die( esc_html__( 'Invalid mode.', 'smart-search-for-woocommerce' ) );
 			}
 		}
 
-		wp_enqueue_script( 'se_admin_widget' );
-		wp_enqueue_script( 'se_link' );
+		if ( Api::get_instance()->use_gddpr_registration() && ! Api::get_instance()->check_gddpr_accepted() ) {
+			if ( ! Api::get_instance()->check_auto_install() ) {
+				// User already accept gddpr.
+				Api::get_instance()->set_gddpr_accepted();
+			} else {
+				$this->show_gddpr_page();
+				return $this;
+			}
+		}
+
+		wp_enqueue_script( 'searchanise-admin-widgets' );
+		wp_enqueue_script( 'searchanise-link' );
 
 		echo '<div class="wrap"><h1>'
 			. esc_html( Api::get_instance()->get_product_name() )
 			. '</h1><div class="snize" id="snize_container"></div></div>';
 
 		return $this;
+	}
+
+	/**
+	 * Accept gddpr action
+	 *
+	 * @return void
+	 */
+	private function action_accept_gddpr() {
+		if ( ! current_user_can( 'manage_searchanise' ) ) {
+			wp_die( esc_html__( 'Access denied.', 'smart-search-for-woocommerce' ) );
+		}
+
+		Api::get_instance()->set_gddpr_accepted();
+
+		$return_url = isset( $_GET['return_url'] ) ? sanitize_text_field( wp_unslash( $_GET['return_url'] ) ) : null; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+
+		if ( Api::get_instance()->check_auto_install() ) {
+			$text_notification = sprintf(
+			/* translators: %s: admin panel */
+				__( 'Plugin was successfully installed. Catalog indexation in process. <a href="%s">Admin Panel</a>.', 'smart-search-for-woocommerce' ),
+				Api::get_instance()->get_admin_url()
+			);
+
+			$this->signup( $text_notification );
+		}
+
+		if ( $return_url ) {
+			wp_safe_redirect( $return_url );
+		}
 	}
 
 	/**
@@ -467,12 +594,25 @@ class Admin {
 	 * Settings controller
 	 */
 	public function searchanise_settings() {
-		global $se_need_reindexation;
+		global $searchanise_need_reindexation;
 
 		$admin_setting = new Admin_Setting();
 		$admin_setting->init();
 
-		if ( isset( $_SERVER['REQUEST_METHOD'] ) && 'POST' == $_SERVER['REQUEST_METHOD'] ) {
+		if (
+			isset( $_SERVER['REQUEST_METHOD'] ) &&
+			'POST' == $_SERVER['REQUEST_METHOD'] &&
+			isset( $_REQUEST['searchanise_mode'] ) && // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			'update' == $_REQUEST['searchanise_mode'] // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		) {
+			if ( ! current_user_can( 'manage_searchanise_settings' ) ) {
+				wp_die( esc_html__( 'Access denied.', 'smart-search-for-woocommerce' ) );
+			}
+
+			if ( ! isset( $_POST['searchanise_settings_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['searchanise_settings_nonce'] ) ), 'searchanise_settings_nonce' ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+				wp_die( esc_html__( 'Security check failed.', 'smart-search-for-woocommerce' ) );
+			}
+
 			$post        = filter_input_array( INPUT_POST, FILTER_SANITIZE_SPECIAL_CHARS );
 			$se_settings = isset( $post['se_search_input_selector'] ) ? $post : array();
 
@@ -501,10 +641,13 @@ class Admin {
 					Api::get_instance()->set_system_setting( $name, $val );
 				}
 
-				$se_need_reindexation = $need_reindexation;
+				$searchanise_need_reindexation = $need_reindexation;
 			}
 
 			flush_rewrite_rules();
+
+			$referrer_url = wp_get_referer();
+			wp_safe_redirect( false === $referrer_url ? $this->get_admin_settings_link() : $referrer_url );
 		}
 
 		return $this;
@@ -539,7 +682,7 @@ class Admin {
 		 * @param array $pages
 		 * @param string $lang_code
 		 */
-		return (array) apply_filters( 'se_get_all_pages', $pages, $lang_code );
+		return (array) apply_filters( 'searchanise_admin_get_all_pages', $pages, $lang_code );
 	}
 
 	/**
@@ -566,7 +709,7 @@ class Admin {
 		 * @param array $categories
 		 * @param string $lang_code
 		 */
-		return (array) apply_filters( 'se_get_all_categories', $categories, $lang_code );
+		return (array) apply_filters( 'searchanise_admin_get_all_categories', $categories, $lang_code ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
 	}
 
 	/**

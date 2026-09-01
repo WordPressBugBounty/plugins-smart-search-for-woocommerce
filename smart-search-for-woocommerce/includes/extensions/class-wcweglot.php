@@ -7,7 +7,7 @@
 
 namespace Searchanise\Extensions;
 
-defined( 'SE_ABSPATH' ) || exit;
+defined( 'ABSPATH' ) || exit;
 
 use Searchanise\SmartWoocommerceSearch\Abstract_Extension;
 use Searchanise\SmartWoocommerceSearch\Api;
@@ -21,6 +21,8 @@ class WcWeglot extends Abstract_Extension {
 
 	const OPTION_NAME      = '_transient_weglot_cache_cdn';
 	const SAVE_TIME_OPTION = 30;
+
+	const OLD_VALUE_TRANSIENT_NAME = 'searchanise_old_value_weglot_langs';
 
 	/**
 	 * Plugin path
@@ -36,7 +38,7 @@ class WcWeglot extends Abstract_Extension {
 		$this->plugin_path = WP_PLUGIN_DIR . DIRECTORY_SEPARATOR . $this->getBaseNameExtra();
 
 		if ( $this->is_active() && $this->isAvailableIntegration() ) {
-			add_filter( 'se_get_frontend_url_pre', array( $this, 'seGetFrontendUrlPre' ), 10, 2 );
+			add_filter( 'searchanise_get_frontend_url_pre', array( $this, 'seGetFrontendUrlPre' ), 10, 2 );
 			add_action( 'activated_plugin', array( $this, 'checkIsActivatedPlugin' ), 10, 2 );
 
 			$this->setHooks();
@@ -61,10 +63,10 @@ class WcWeglot extends Abstract_Extension {
 	 */
 	protected function get_filters() {
 		return array(
-			'se_get_english_name',
-			'se_get_translate',
-			'se_get_language_link',
-			'se_get_current_language',
+			'searchanise_get_english_name',
+			'searchanise_get_translate',
+			'searchanise_get_language_link',
+			'searchanise_get_current_language',
 		);
 	}
 
@@ -93,7 +95,7 @@ class WcWeglot extends Abstract_Extension {
 		// Hook for change weglot settings.
 		add_action( 'add_option_' . self::OPTION_NAME, array( $this, 'addOption' ), 10, 2 );
 		add_action( 'update_option_' . self::OPTION_NAME, array( $this, 'changeOption' ), 10, 2 );
-		add_action( 'se_get_active_languages', array( $this, 'seGetActiveLanguages' ), 10, 2 );
+		add_action( 'searchanise_get_active_languages', array( $this, 'getActiveLanguages' ), 10, 2 );
 		add_filter( 'delete_option_' . self::OPTION_NAME, array( $this, 'deactivateInactiveLanguages' ), 10, 2 );
 
 		// Deactivate weglot.
@@ -178,8 +180,8 @@ class WcWeglot extends Abstract_Extension {
 								Api::get_instance()->add_admin_notitice(
 									sprintf(
 										/* translators: %s: lang code */
-										__( 'New search engine for %s created. Catalog import started' ),
-										$lang_code
+										esc_html__( 'New search engine for %s created. Catalog import started', 'smart-search-for-woocommerce' ),
+										esc_html( $lang_code )
 									),
 									'info'
 								);
@@ -188,7 +190,7 @@ class WcWeglot extends Abstract_Extension {
 							// Engine exists run import.
 							Api::get_instance()->addon_status_request( Api::ADDON_STATUS_ENABLED, $lang_code );
 							Api::get_instance()->queue_import( $lang_code, false );
-							Api::get_instance()->add_admin_notitice( 'Language settings updated. The product catalog is queued for syncing with Searchanise.' );
+							Api::get_instance()->add_admin_notitice( __( 'Language settings updated. The product catalog is queued for syncing with Searchanise.', 'smart-search-for-woocommerce' ) );
 						}
 					}
 				}
@@ -224,10 +226,9 @@ class WcWeglot extends Abstract_Extension {
 	 * @return array langs
 	 */
 	public function getLangCodesList() {
-		$lang_codes = array();
-
 		// Get enabled language codes from weglot.
 		if ( function_exists( 'weglot_get_destination_languages' ) ) {
+			$lang_codes                   = array();
 			$weglot_destination_languages = weglot_get_destination_languages();
 
 			// Original weglot language.
@@ -238,9 +239,11 @@ class WcWeglot extends Abstract_Extension {
 					$lang_codes[] = $lang['language_to'];
 				}
 			}
+
+			return $lang_codes;
 		}
 
-		return $lang_codes;
+		return array();
 	}
 
 	/**
@@ -260,7 +263,10 @@ class WcWeglot extends Abstract_Extension {
 	private static function getAllWeglotLangs() {
 		global $wpdb;
 
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
 		$weglot_langs = $wpdb->get_col( "SELECT DISTINCT `lang_code` FROM {$wpdb->prefix}wc_se_settings WHERE lang_code != 'default' AND lang_code !=''" );
+		// phpcs:enable
 
 		return $weglot_langs;
 	}
@@ -271,7 +277,7 @@ class WcWeglot extends Abstract_Extension {
 	 * @return void
 	 */
 	public function deactivateAddon() {
-		set_transient( 'old_value_weglot_langs', $this->getLangCodesList(), self::SAVE_TIME_OPTION );
+		set_transient( self::OLD_VALUE_TRANSIENT_NAME, $this->getLangCodesList(), self::SAVE_TIME_OPTION );
 		$lang_codes = self::getAllWeglotLangs();
 
 		// Disabled all weglot lang engines, clear action and set export status none.
@@ -287,7 +293,7 @@ class WcWeglot extends Abstract_Extension {
 	 *
 	 * @return void
 	 */
-	public function uninstallAddon() {
+	public static function uninstallAddon() {
 		$lang_codes = self::getAllWeglotLangs();
 
 		foreach ( $lang_codes as $lang_code ) {
@@ -302,7 +308,7 @@ class WcWeglot extends Abstract_Extension {
 	 *
 	 * @return array all active langs
 	 */
-	public function seGetActiveLanguages( $active_languages ) {
+	public function getActiveLanguages( $active_languages ) {
 		if ( $this->is_active() ) {
 			$active_languages = array_merge( (array) $active_languages, $this->getLangCodesList() );
 		}
@@ -336,7 +342,7 @@ class WcWeglot extends Abstract_Extension {
 	 *
 	 * @return string full English name
 	 */
-	public function seGetEnglishName( $lang_code ) {
+	public function searchaniseGetEnglishName( $lang_code ) {
 		$english_name = false;
 
 		if ( $this->is_active() && function_exists( 'weglot_get_service' ) ) {
@@ -410,7 +416,7 @@ class WcWeglot extends Abstract_Extension {
 	 *
 	 * @return string $link with $lang_code
 	 */
-	public function seGetLanguageLink( $link, $lang_code ) {
+	public function searchaniseGetLanguageLink( $link, $lang_code ) {
 		$lang_code = $this->getExternalCode( $lang_code );
 		$lang_link = $link;
 
@@ -429,7 +435,7 @@ class WcWeglot extends Abstract_Extension {
 	 *
 	 * @return array
 	 */
-	public function seGetTranslate( $content, $currently_language ) {
+	public function searchaniseGetTranslate( $content, $currently_language ) {
 		$translated_content = $content;
 
 		// Key in array $content for translate ('name' and 'description' is default translate values).
@@ -443,8 +449,7 @@ class WcWeglot extends Abstract_Extension {
 			}
 
 			$original_language = $this->getOriginalLanguage();
-
-			if ( Api::get_instance()->get_locale() != $currently_language ) {
+			if ( $original_language != $currently_language ) {
 				try {
 					if ( is_array( $translated_content ) ) {
 						// Replace key name in array so it doesn't translate.
@@ -492,7 +497,7 @@ class WcWeglot extends Abstract_Extension {
 	 *
 	 * @return string lang code
 	 */
-	public function seGetCurrentLanguage() {
+	public function searchaniseGetCurrentLanguage() {
 		$currently_language = false;
 
 		if ( $this->is_active() && function_exists( 'weglot_get_current_language' ) ) {
@@ -541,7 +546,7 @@ class WcWeglot extends Abstract_Extension {
 	 * @return bool
 	 */
 	public function checkIsNotOldLanguage( $lang_codes, $activated = false ) {
-		return $activated ? $activated : ! empty( get_transient( 'old_value_weglot_langs' ) ) && get_transient( 'old_value_weglot_langs' ) != $lang_codes;
+		return $activated ? $activated : ! empty( get_transient( self::OLD_VALUE_TRANSIENT_NAME ) ) && get_transient( self::OLD_VALUE_TRANSIENT_NAME ) != $lang_codes;
 	}
 
 	/**

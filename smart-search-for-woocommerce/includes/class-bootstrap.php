@@ -16,15 +16,13 @@ use Searchanise\Extensions\WcSeJetpack;
  * Bootstrap class
  */
 class Bootstrap {
-
-	const PHP_OPTION_DISPLAY_STARTUP_ERRORS = 'display_startup_errors';
-	const PHP_OPTION_DISPLAY_ERRORS = 'display_errors';
-	const PHP_OPTION_ERROR_REPORTING = 'error_reporting';
-
 	/**
 	 * Initialization
 	 */
 	public static function init() {
+		// Init translations.
+		add_action( 'init', 'fn_se_load_plugin_textdomain' );
+
 		// Init logger.
 		add_action(
 			'init',
@@ -49,11 +47,7 @@ class Bootstrap {
 			fn_se_define( 'WP_DEBUG_DISPLAY', true );
 		}
 
-		if ( ! empty( $_REQUEST[ Async::FL_DISPLAY_ERRORS ] ) && Async::FL_DISPLAY_ERRORS_KEY == $_REQUEST[ Async::FL_DISPLAY_ERRORS ] ) {
-			@ini_set( self::PHP_OPTION_ERROR_REPORTING, E_ALL );
-			@ini_set( self::PHP_OPTION_DISPLAY_STARTUP_ERRORS, 1 );
-			@ini_set( self::PHP_OPTION_DISPLAY_ERRORS, 1 );
-
+		if ( isset( $_REQUEST[ Async::FL_DISPLAY_ERRORS ] ) && Async::FL_DISPLAY_ERRORS_KEY == $_REQUEST[ Async::FL_DISPLAY_ERRORS ] ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			fn_se_define( 'WP_DEBUG', true );
 			fn_se_define( 'WP_DEBUG_DISPLAY', true );
 		}
@@ -86,7 +80,7 @@ class Bootstrap {
 					 *
 					 * @since 3.6.4
 					 */
-					$session_class    = apply_filters( 'woocommerce_session_handler', 'WC_Session_Handler' );
+					$session_class    = apply_filters( 'woocommerce_session_handler', 'WC_Session_Handler' ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound
 					$default_location = wc_get_customer_default_location();
 
 					WC()->session = new $session_class();
@@ -117,7 +111,7 @@ class Bootstrap {
 		add_action( Cron::CRON_RESYNC_EVENT, array( Cron::class, 'reimporter' ) );
 
 		// Init hooks.
-		$GLOBALS['SeHooks'] = new Hooks();
+		$GLOBALS['Searchanise_Hooks'] = new Hooks();
 
 		self::load_extensions();
 	}
@@ -127,22 +121,22 @@ class Bootstrap {
 	 */
 	public static function plugin_loaded() {
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
-			$GLOBALS['SearchaniseCli'] = new Cli_Commands();
+			$GLOBALS['Searchanise_Cli'] = new Cli_Commands();
 
 		} elseif ( ! is_admin() && ! defined( 'DOING_AJAX' ) && ! defined( 'DOING_CRON' ) ) {
 			// Init Searchanise Recommendations.
-			$GLOBALS['SearchaniseRecommendations'] = new Recommendations( Api::get_instance()->get_locale() );
+			$GLOBALS['Searchanise_Recommendations'] = new Recommendations( Api::get_instance()->get_locale() );
 			// Init widgets.
 			add_action(
 				'plugins_loaded',
 				function () {
 					$currently_language = Api::get_instance()->get_currently_language();
 					// Init Searchresults widget.
-					$GLOBALS['searchanise'] = new Search_Results( $currently_language );
+					$GLOBALS['searchanise_Widget'] = new Search_Results( $currently_language );
 					// Init fulltext search.
-					$GLOBALS['SearchaniseSearch'] = new Fulltext_Search( $currently_language );
+					$GLOBALS['Searchanise_Search'] = new Fulltext_Search( $currently_language );
 					// Init Searchanise SmartNavigaion.
-					$GLOBALS['SearchaniseNavigation'] = new Navigation( $currently_language );
+					$GLOBALS['Searchanise_Navigation'] = new Navigation( $currently_language );
 				},
 				Api::POSTPONED_LOAD_PRIORITY
 			);
@@ -150,7 +144,7 @@ class Bootstrap {
 			Async::init();
 
 		} elseif ( is_admin() && ! defined( 'DOING_AJAX' ) && ! defined( 'DOING_CRON' ) ) {
-			$GLOBALS['Admin'] = new Admin();
+			$GLOBALS['Searchanise_Admin'] = new Admin();
 		}
 	}
 
@@ -160,8 +154,8 @@ class Bootstrap {
 	 * @return void
 	 */
 	public static function load_extensions() {
-		$GLOBALS['WoocommerceSearchaniseWeglot']  = new WcWeglot();
-		$GLOBALS['WoocommerceSearchaniseJetpack'] = new WcSeJetpack();
+		$GLOBALS['Searchanise_Woocommerce_Weglot']  = new WcWeglot();
+		$GLOBALS['Searchanise_Woocommerce_Jetpack'] = new WcSeJetpack();
 
 		register_uninstall_hook( WP_PLUGIN_DIR . DIRECTORY_SEPARATOR . 'weglot/weglot.php', array( WcWeglot::class, 'uninstallAddon' ) );
 	}

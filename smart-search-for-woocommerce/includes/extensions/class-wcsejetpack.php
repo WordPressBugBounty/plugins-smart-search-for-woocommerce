@@ -7,7 +7,7 @@
 
 namespace Searchanise\Extensions;
 
-defined( 'SE_ABSPATH' ) || exit;
+defined( 'ABSPATH' ) || exit;
 
 use Searchanise\SmartWoocommerceSearch\Abstract_Extension;
 use Searchanise\SmartWoocommerceSearch\Api;

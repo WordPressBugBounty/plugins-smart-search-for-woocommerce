@@ -85,7 +85,7 @@ class Search_Results {
 				$this->is_search_results_page = $post_id && $post_id == $this->search_results_page_id;
 
 				if ( $this->is_search_results_page ) {
-					$script = <<<SE_SPINNER
+					$script = "
 	(function(window, undefined) {
 		var sXpos = 0, sIndex = 0, sInterval = null;
 
@@ -93,7 +93,7 @@ class Search_Results {
 			return;
 		}
 
-		document.getElementById('snize_results').innerHTML = '<div id="snize-preload-spinner"></div>';
+		document.getElementById('snize_results').innerHTML = '<div id=\"snize-preload-spinner\"></div>';
 		sInterval = setInterval(function() {
 			var spinner = document.getElementById('snize-preload-spinner');
 			if (spinner) {
@@ -111,11 +111,11 @@ class Search_Results {
 			}
 		}, 30);
 	}(window));
-SE_SPINNER;
+";
 
 					if ( function_exists( 'wp_add_inline_script' ) ) {
 						$searchanise_custom_handle = 'searchanise-custom-script';
-						wp_register_script( $searchanise_custom_handle, false, array(), null, true );
+						wp_register_script( $searchanise_custom_handle, false, array(), SE_PLUGIN_VERSION, true );
 						wp_enqueue_script( $searchanise_custom_handle );
 						wp_add_inline_script( $searchanise_custom_handle, $script );
 					} else {
@@ -153,8 +153,8 @@ SE_SPINNER;
 	 *
 	 * @since 4.5.0
 	 *
-	 * @param bool     $preempt  Whether to short-circuit default header status handling. Default false.
-	 * @param WP_Query $wp_query WordPress Query object.
+	 * @param bool      $preempt  Whether to short-circuit default header status handling. Default false.
+	 * @param \WP_Query $wp_query WordPress Query object.
 	 *
 	 * @return bool
 	 */
@@ -213,9 +213,7 @@ SE_SPINNER;
 	 */
 	public static function ajax_add_to_cart() {
 		$response   = array();
-		$product_id = isset( $_REQUEST['product_id'] )
-			? (int) $_REQUEST['product_id']
-			: '';
+		$product_id = isset( $_REQUEST['product_id'] ) ? (int) $_REQUEST['product_id'] : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
 		if ( ! empty( $product_id ) ) {
 			/**
@@ -225,12 +223,12 @@ SE_SPINNER;
 			 *
 			 * @param $item_product_id
 			 */
-			$product_id = apply_filters( 'woocommerce_add_to_cart_product_id', (int) $product_id );
+			$product_id = apply_filters( 'woocommerce_add_to_cart_product_id', (int) $product_id ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 		}
 
-		$quantity     = ! isset( $_REQUEST['quantity'] )
+		$quantity     = ! isset( $_REQUEST['quantity'] ) // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			? 1
-			: wc_stock_amount( (int) $_REQUEST['quantity'] );
+			: wc_stock_amount( intval( $_REQUEST['quantity'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$variation_id = 0;
 
 		if ( ! empty( $product_id ) && ! empty( $quantity ) ) {
@@ -258,7 +256,7 @@ SE_SPINNER;
 				 * @param integer $product_id        Product ID being validated.
 				 * @param integer $quantity          Quantity added to the cart.
 				 */
-				$passed_validation = apply_filters( 'woocommerce_add_to_cart_validation', true, $product_id, $quantity );
+				$passed_validation = apply_filters( 'woocommerce_add_to_cart_validation', true, $product_id, $quantity ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 				$product_status    = get_post_status( $product_id );
 
 				if ( $passed_validation && 'publish' == $product_status && WC()->cart->add_to_cart( $product_id, $quantity, $variation_id ) ) {
@@ -269,7 +267,7 @@ SE_SPINNER;
 					 *
 					 * @param  $product_id
 					 */
-					do_action( 'woocommerce_ajax_added_to_cart', $product_id );
+					do_action( 'woocommerce_ajax_added_to_cart', $product_id ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 
 					$response = array(
 						'status'   => self::ADD_TO_CART_STATUS_SUCCESS,
@@ -303,7 +301,7 @@ SE_SPINNER;
 			 * @param  $permalink
 			 * @param  $product_id
 			 */
-			$response['redirect'] = apply_filters( 'woocommerce_cart_redirect_after_error', get_permalink( $product_id ), $product_id );
+			$response['redirect'] = apply_filters( 'woocommerce_cart_redirect_after_error', get_permalink( $product_id ), $product_id ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 		}
 
 		wp_send_json( $response );
@@ -354,7 +352,7 @@ SE_SPINNER;
 		 * @param string $se_searchanise_url Page url
 		 * @param string $lang_code Lang code
 		 */
-		return apply_filters( 'se_get_search_results_page_url', $se_searchanise_url, $this->lang_code );
+		return apply_filters( 'se_get_search_results_page_url', $se_searchanise_url, $this->lang_code ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 	}
 
 	/**
@@ -409,51 +407,52 @@ SE_SPINNER;
 		$se_widgets_file_path = SE_BASE_DIR . '/assets/js/se-widgets.js';
 
 		$se_options = array(
-			'version'                      => SE_VERSION,
-			'host'                         => is_ssl() ? str_replace( 'http://', 'https://', SE_SERVICE_URL ) : SE_SERVICE_URL,
-			'api_key'                      => Api::get_instance()->get_api_key( $this->lang_code ),
+			'version'                                => SE_VERSION,
+			'host'                                   => is_ssl() ? str_replace( 'http://', 'https://', SE_SERVICE_URL ) : SE_SERVICE_URL,
+			'api_key'                                => Api::get_instance()->get_api_key( $this->lang_code ),
 			/**
 			 * Searchanise decimals
 			 *
 			 * @since 1.0.0
 			 */
-			'decimals'                     => apply_filters( 'se_decimals', wc_get_price_decimals() ),
+			'decimals'                               => apply_filters( 'searchanise_decimals', wc_get_price_decimals() ),
 			/**
 			 * Searchanise decimals separator
 			 *
 			 * @since 1.0.0
 			 */
-			'decimals_separator'           => apply_filters( 'se_decimals_separator', wc_get_price_decimal_separator() ),
+			'decimals_separator'                     => apply_filters( 'searchanise_decimals_separator', wc_get_price_decimal_separator() ),
 			/**
 			 * Searchanise thousands separator
 			 *
 			 * @since 1.0.0
 			 */
-			'thousands_separator'          => apply_filters( 'se_thousands_separator', wc_get_price_thousand_separator() ),
+			'thousands_separator'                    => apply_filters( 'searchanise_thousands_separator', wc_get_price_thousand_separator() ),
 			/**
 			 * Searchanise currency symbol
 			 *
 			 * @since 1.0.0
 			 */
-			'symbol'                       => apply_filters( 'se_currency_symbol', get_woocommerce_currency_symbol() ),
-			'rate'                         => Api::get_instance()->get_currency_rate(),
-			'currency_position_after'      => $this->get_currency_position_after(),
-			'search_input'                 => Api::get_instance()->get_search_input_selector(),
-			'results_form_path'            => $se_searchanise_url,
-			'results_fallback_url'         => $this->get_fallback_url(),
-			'results_add_to_cart_url'      => $this->get_add_to_cart_url(),
-			'hide_out_of_stock_products'   => 'yes' === get_option( 'woocommerce_hide_out_of_stock_items' ) ? 'Y' : 'N',
-			'cur_label_for_usergroup'      => Api::get_instance()->get_cur_label_for_prices_usergroup(),
-			'list_cur_label_for_usergroup' => Api::get_instance()->get_cur_label_for_prices_usergroup( self::LIST_PRICE_TYPE ),
-			'max_cur_label_for_usergroup'  => Api::get_instance()->get_cur_label_for_prices_usergroup( self::MAX_PRICE_TYPE ),
-			'usergroup_ids'                => implode( '|', Api::get_instance()->get_current_usergroup_ids() ),
-			'use_wp_jquery'                => Api::get_instance()->is_use_wp_jquery(),
-			'recentlyViewedProducts'       => Api::get_instance()->get_recently_viewed_product_ids(),
-			'hideEmptyPrice'               => Api::get_instance()->get_hide_empty_price(),
+			'symbol'                                 => apply_filters( 'searchanise_currency_symbol', get_woocommerce_currency_symbol() ),
+			'rate'                                   => Api::get_instance()->get_currency_rate(),
+			'currency_position_after'                => $this->get_currency_position_after(),
+			'search_input'                           => Api::get_instance()->get_search_input_selector(),
+			'results_form_path'                      => $se_searchanise_url,
+			'results_fallback_url'                   => $this->get_fallback_url(),
+			'results_add_to_cart_url'                => $this->get_add_to_cart_url(),
+			'hide_out_of_stock_products'             => 'yes' === get_option( 'woocommerce_hide_out_of_stock_items' ) ? 'Y' : 'N',
+			'cur_label_for_usergroup'                => Api::get_instance()->get_cur_label_for_prices_usergroup(),
+			'list_cur_label_for_usergroup'           => Api::get_instance()->get_cur_label_for_prices_usergroup( self::LIST_PRICE_TYPE ),
+			'max_cur_label_for_usergroup'            => Api::get_instance()->get_cur_label_for_prices_usergroup( self::MAX_PRICE_TYPE ),
+			'usergroup_ids'                          => implode( '|', Api::get_instance()->get_current_usergroup_ids() ),
+			'use_wp_jquery'                          => Api::get_instance()->is_use_wp_jquery(),
+			'recentlyViewedProducts'                 => Api::get_instance()->get_recently_viewed_product_ids(),
+			'hideEmptyPrice'                         => Api::get_instance()->get_hide_empty_price(),
+			'request_param_disable_smart_navigation' => Navigation::REQUEST_PARAM_DISABLE_SMART_NAVIGATION,
 		);
 
 		$searchanise_custom_handle = 'searchanise-custom-script';
-		$selector = Api::get_instance()->escape_javascript(
+		$selector                  = Api::get_instance()->escape_javascript(
 			Api::get_instance()->get_search_input_selector()
 		);
 
@@ -465,7 +464,7 @@ SE_SPINNER;
 		";
 
 		if ( function_exists( 'wp_add_inline_script' ) ) {
-			wp_register_script( $searchanise_custom_handle, false, array( 'jquery' ), null, true );
+			wp_register_script( $searchanise_custom_handle, false, array( 'jquery' ), SE_PLUGIN_VERSION, true );
 			wp_enqueue_script( $searchanise_custom_handle );
 			wp_add_inline_script( $searchanise_custom_handle, $script );
 		} else {
@@ -473,17 +472,17 @@ SE_SPINNER;
 		}
 
 		// Loading css.
-		wp_enqueue_style( 'se_styles', plugins_url( SE_BASE_DIR . '/assets/css/se-styles.css' ), array(), SE_PLUGIN_VERSION, false );
+		wp_enqueue_style( 'searchanise_styles', plugins_url( SE_BASE_DIR . '/assets/css/se-styles.css' ), array(), SE_PLUGIN_VERSION, false );
 
 		/**
 		 * Searchanise load search widgets
 		 *
 		 * @since 1.0.0
 		 */
-		$se_options = apply_filters( 'se_load_search_widgets', $se_options );
-		wp_register_script( 'se-widgets', plugins_url( $se_widgets_file_path ), array( 'jquery' ), SE_PLUGIN_VERSION, true );
-		wp_localize_script( 'se-widgets', 'SeOptions', $se_options );
-		wp_enqueue_script( 'se-widgets' );
+		$se_options = apply_filters( 'searchanise_load_search_widgets', $se_options );
+		wp_register_script( 'searchanise-widgets', plugins_url( $se_widgets_file_path ), array( 'jquery' ), SE_PLUGIN_VERSION, true );
+		wp_localize_script( 'searchanise-widgets', 'searchanise_options', $se_options );
+		wp_enqueue_script( 'searchanise-widgets' );
 
 		// Refresh shopping cart.
 		$script = "
@@ -495,7 +494,7 @@ SE_SPINNER;
 		";
 
 		if ( function_exists( 'wp_add_inline_script' ) ) {
-			wp_register_script( $searchanise_custom_handle, false, array( 'jquery' ), null, true );
+			wp_register_script( $searchanise_custom_handle, false, array( 'jquery' ), SE_PLUGIN_VERSION, true );
 			wp_enqueue_script( $searchanise_custom_handle );
 			wp_add_inline_script( $searchanise_custom_handle, $script );
 		} else {

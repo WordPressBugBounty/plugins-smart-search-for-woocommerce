@@ -80,6 +80,30 @@ class Hooks extends Abstract_Extension {
 	private $product_tag_ids = null;
 
 	/**
+	 * The prefixes of hooks that have been deprecated, 'new_hook' => 'old_hook_prefix'
+	 *
+	 * @var string[]
+	 */
+	private $deprecated_hook_prefixes = array();
+
+	/**
+	 * The hooks that have been deprecated, 'new_hook' => 'old_hook'
+	 *
+	 * @var string[]
+	 */
+	private $deprecated_hooks = array();
+
+	/**
+	 * The hooks that have been deprecated, 'new_hook' => 'old_hook'
+	 *
+	 * @var string[]
+	 */
+	private $deprecated_filters = array(
+		'searchanise_prepare_product_data'    => 'se_prepare_product_data',
+		'searchanise_get_get_product_filters' => 'se_get_get_product_filters',
+	);
+
+	/**
 	 * Hooks constructor
 	 */
 	public function __construct() {
@@ -87,12 +111,18 @@ class Hooks extends Abstract_Extension {
 		register_activation_hook( SE_ABSPATH . DIRECTORY_SEPARATOR . 'woocommerce-searchanise.php', array( $this, 'activateAddon' ) );
 		register_deactivation_hook( SE_ABSPATH . DIRECTORY_SEPARATOR . 'woocommerce-searchanise.php', array( $this, 'deactivateAddon' ) );
 
-		add_action(
-			'plugins_loaded',
-			function () {
-				parent::__construct();
-			}
+		parent::__construct( true );
+
+		$this->deprecated_hooks = array_merge(
+			$this->deprecated_hooks,
+			$this->deprecated_filters
 		);
+
+		foreach ( $this->deprecated_hooks as $new_hook => $old_hook ) {
+			add_filter( $new_hook, array( &$this, 'maybe_handle_deprecated_hook' ), -1000, 8 );
+		}
+
+		add_filter( 'all', array( &$this, 'check_for_deprecated_hooks' ), 9999 );
 	}
 
 	/**
@@ -134,14 +164,18 @@ class Hooks extends Abstract_Extension {
 	public function activateAddon() {
 		global $wp_version;
 
+		Api::get_instance()->clear_cache_data();
+
 		if ( ! is_multisite() ) {
-			// Unregister old tasks if exist.
+			// Unregister old tasks if exists.
 			Cron::unregister();
 			Installer::install();
 
-			// If addon already was installed, run import.
 			if ( ! Api::get_instance()->check_auto_install() ) {
+				// If addon already was installed, run import.
 				Api::get_instance()->set_is_need_reindexation( true );
+			} elseif ( Api::get_instance()->use_gddpr_registration() && ! Api::get_instance()->check_gddpr_accepted() ) {
+				Api::get_instance()->set_gddpr_redirect();
 			}
 
 			// Register searchanise info page.
@@ -152,7 +186,7 @@ class Hooks extends Abstract_Extension {
 		if ( version_compare( $wp_version, Api::MIN_WORDPRESS_VERSION ) < 0 ) {
 			Api::get_instance()->add_admin_notitice(
 				/* translators: version */
-				sprintf( esc_html__( 'Plugin is compatible with WordPress version %1$s or higher. Plugin may work incorrectly. Please upgrade your WordPress to %2$s version or highter', 'woocommerce-searchanise' ), Api::MIN_WORDPRESS_VERSION, Api::MIN_WORDPRESS_VERSION ),
+				sprintf( esc_html__( 'Plugin is compatible with WordPress version %1$s or higher. Plugin may work incorrectly. Please upgrade your WordPress to %2$s version or highter', 'smart-search-for-woocommerce' ), Api::MIN_WORDPRESS_VERSION, Api::MIN_WORDPRESS_VERSION ),
 				'error'
 			);
 		}
@@ -160,7 +194,7 @@ class Hooks extends Abstract_Extension {
 		if ( defined( 'WC_VERSION' ) && version_compare( WC_VERSION, Api::MIN_WOOCOMMERCE_VERSION ) < 0 ) {
 			Api::get_instance()->add_admin_notitice(
 				/* translators: version */
-				sprintf( esc_html__( 'The plugin is compatible with WooCommerce version %1$s or higher. The plugin may work incorrectly. Please upgrade your WooCommerce to %2$s version or highter', 'woocommerce-searchanise' ), Api::MIN_WOOCOMMERCE_VERSION, Api::MIN_WOOCOMMERCE_VERSION ),
+				sprintf( esc_html__( 'The plugin is compatible with WooCommerce version %1$s or higher. The plugin may work incorrectly. Please upgrade your WooCommerce to %2$s version or highter', 'smart-search-for-woocommerce' ), Api::MIN_WOOCOMMERCE_VERSION, Api::MIN_WOOCOMMERCE_VERSION ),
 				'error'
 			);
 		}
@@ -183,6 +217,121 @@ class Hooks extends Abstract_Extension {
 		Cron::unregister();
 	}
 
+	/**
+	 * Check for deprecated hooks
+	 *
+	 * @return void
+	 */
+	public function check_for_deprecated_hooks() {
+		$current_filter = current_filter();
+
+		foreach ( $this->deprecated_hook_prefixes as $new_hook_prefix => $old_hook_prefixes ) {
+			if ( is_array( $old_hook_prefixes ) ) {
+				foreach ( $old_hook_prefixes as $old_hook_prefix ) {
+					$this->check_for_deprecated_hook( $current_filter, $new_hook_prefix, $old_hook_prefix );
+				}
+			} else {
+				$this->check_for_deprecated_hook( $current_filter, $new_hook_prefix, $old_hook_prefixes );
+			}
+		}
+	}
+
+	/**
+	 * Check if a given hook contains the prefix and if it does as a callback to it.
+	 *
+	 * @param string $current_hook    Current hook name.
+	 * @param string $new_hook_prefix New hook prefix.
+	 * @param string $old_hook_prefix New hook prefix.
+	 *
+	 * @return void
+	 */
+	protected function check_for_deprecated_hook( $current_hook, $new_hook_prefix, $old_hook_prefix ) {
+
+		if ( false !== strpos( $current_hook, $new_hook_prefix ) ) {
+
+			// Get the dynamic suffix on the hook, usually a payment gateway name, like 'stripe' or 'authorize_net_cim'.
+			$hook_suffix = str_replace( $new_hook_prefix, '', $current_hook );
+			$old_hook    = $old_hook_prefix . $hook_suffix;
+
+			// register the entire new and old hook.
+			$this->deprecated_hooks[ $current_hook ][] = $old_hook;
+
+			// and attach our handler now that we know the hooks.
+			add_filter( $current_hook, array( &$this, 'maybe_handle_deprecated_hook' ), -1000, 8 );
+		}
+	}
+
+	/**
+	 * Check if an old hook still has callbacks attached to it, and if so, display a notice and trigger the old hook.
+	 *
+	 * @return mixed
+	 */
+	public function maybe_handle_deprecated_hook() {
+		$new_hook  = current_filter();
+		$old_hooks = ( isset( $this->deprecated_hooks[ $new_hook ] ) ) ? $this->deprecated_hooks[ $new_hook ] : '';
+
+		$new_callback_args = func_get_args();
+		$return_value      = $new_callback_args[0];
+
+		if ( ! empty( $old_hooks ) ) {
+			if ( is_array( $old_hooks ) ) {
+				foreach ( $old_hooks as $old_hook ) {
+					$return_value = $this->handle_deprecated_hook( $new_hook, $old_hook, $new_callback_args, $return_value );
+				}
+			} else {
+				$return_value = $this->handle_deprecated_hook( $new_hook, $old_hooks, $new_callback_args, $return_value );
+			}
+		}
+
+		return $return_value;
+	}
+
+	/**
+	 * If the old hook is in-use, trigger it.
+	 *
+	 * @param  string $new_hook          New hook name.
+	 * @param  string $old_hook          Old hook name.
+	 * @param  array  $new_callback_args New callback args.
+	 * @param  mixed  $return_value      Returned value.
+	 * @return mixed
+	 */
+	protected function handle_deprecated_hook( $new_hook, $old_hook, $new_callback_args, $return_value ) {
+		if ( has_filter( $old_hook ) ) {
+			$this->display_deprecated_notice( $old_hook, $new_hook );
+			$return_value = $this->trigger_deprecated_hook( $old_hook, $new_callback_args );
+		}
+
+		return $return_value;
+	}
+
+	/**
+	 * Display deprecated hook warning
+	 *
+	 * @param string $old_hook Old hook name.
+	 * @param string $new_hook New hook name.
+	 * @return void
+	 */
+	protected static function display_deprecated_notice( $old_hook, $new_hook ) {
+		_deprecated_function( sprintf( 'The "%s" hook uses out of date data structures so', esc_html( $old_hook ) ), esc_html( '1.0.20 of ' . SE_PLUGIN_BASENAME ), esc_html( $new_hook ) );
+	}
+
+	/**
+	 * Fire off a legacy hook with it's args.
+	 *
+	 * @param  string $old_hook          Old hook name.
+	 * @param  array  $new_callback_args New callback args.
+	 * @return mixed
+	 */
+	protected function trigger_deprecated_hook( $old_hook, $new_callback_args ) {
+		if ( in_array( $old_hook, $this->deprecated_filters ) ) {
+			return apply_filters_ref_array( $old_hook, $new_callback_args );
+		}
+
+		do_action_ref_array( $old_hook, $new_callback_args );
+
+		return null;
+	}
+
 	/************************************
 	 * Products hooks
 	 ***********************************/
@@ -200,7 +349,7 @@ class Hooks extends Abstract_Extension {
 	/**
 	 * Update product
 	 *
-	 * @param int $product_id Product id.
+	 * @param int|array $product_id Product id.
 	 */
 	public function updateProduct( $product_id ) {
 		$this->addProductToQueue( $product_id );
@@ -270,7 +419,7 @@ class Hooks extends Abstract_Extension {
 	/**
 	 * Get product parent ids (for grouped products)
 	 *
-	 * @param WC_Product $product Product.
+	 * @param \WC_Product $product Product.
 	 *
 	 * @return array
 	 */
@@ -339,9 +488,9 @@ class Hooks extends Abstract_Extension {
 	 *
 	 * @since 1.5.0
 	 *
-	 * @param int     $post_ID Post ID.
-	 * @param WP_Post $post    Post object.
-	 * @param bool    $update  Whether this is an existing post being updated or not.
+	 * @param int      $post_ID Post ID.
+	 * @param \WP_Post $post    Post object.
+	 * @param bool     $update  Whether this is an existing post being updated or not.
 	 */
 	public function savePost( $post_ID, $post, $update ) {
 		if ( $post instanceof \WP_Post && in_array( $post->post_type, Async::get_post_types() ) ) {
@@ -574,7 +723,7 @@ class Hooks extends Abstract_Extension {
 	 * @param string $old_slug  Attribute old name.
 	 */
 	public function attributeUpdated( $id, $data, $old_slug ) {
-		$product_ids = $this->getProductIdsByTaxonomy( wc_attribute_taxonomy_name( $data['attribute_name'] ) );
+		$product_ids = $this->get_product_ids_by_taxonomy( wc_attribute_taxonomy_name( $data['attribute_name'] ) );
 
 		if ( ! empty( $product_ids ) ) {
 			if ( count( $product_ids ) > self::MAX_PRODUCTS_TO_UPDATE ) {
@@ -599,7 +748,7 @@ class Hooks extends Abstract_Extension {
 	 *
 	 * @return array
 	 */
-	private function getProductIdsByTaxonomy( $taxonomy ) {
+	private function get_product_ids_by_taxonomy( $taxonomy ) {
 		global $wpdb;
 
 		if ( empty( $taxonomy ) ) {
@@ -607,6 +756,8 @@ class Hooks extends Abstract_Extension {
 		}
 
 		// Update products including this attribute.
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
 		$product_ids = $wpdb->get_col(
 			$wpdb->prepare(
 				"SELECT DISTINCT(ID) FROM {$wpdb->prefix}posts AS p
@@ -617,13 +768,14 @@ class Hooks extends Abstract_Extension {
 				$taxonomy
 			)
 		);
+		// phpcs:enable
 
 		/**
 		 * Returns product ids by product taxonomy
 		 *
 		 * @since 1.0.0
 		 */
-		return (array) apply_filters( 'se_wc_get_product_ids_by_taxonomy', $product_ids, $taxonomy );
+		return (array) apply_filters( 'searchanise_wc_get_product_ids_by_taxonomy', $product_ids, $taxonomy );
 	}
 
 	/**
@@ -649,7 +801,7 @@ class Hooks extends Abstract_Extension {
 		$attribute_id = wc_attribute_taxonomy_id_by_name( $taxonomy );
 
 		if ( ! empty( $attribute_id ) ) {
-			$product_ids = $this->getProductIdsByTaxonomy( $taxonomy );
+			$product_ids = $this->get_product_ids_by_taxonomy( $taxonomy );
 
 			if ( ! empty( $product_ids ) ) {
 				if ( count( $product_ids ) > self::MAX_PRODUCTS_TO_UPDATE ) {
@@ -689,7 +841,7 @@ class Hooks extends Abstract_Extension {
 
 			} else {
 				// Update related products for WP lower than 4.5.0.
-				$product_ids = $this->getProductIdsByTaxonomy( $taxonomy );
+				$product_ids = $this->get_product_ids_by_taxonomy( $taxonomy );
 
 				if ( ! empty( $product_ids ) ) {
 					if ( count( $product_ids ) > self::MAX_PRODUCTS_TO_UPDATE ) {
@@ -855,7 +1007,7 @@ class Hooks extends Abstract_Extension {
 			/**
 			 * Order item
 			 *
-			 * @var WC_Order_Item
+			 * @var \WC_Order_Item
 			 */
 			$items = $order->get_items();
 
@@ -882,6 +1034,8 @@ class Hooks extends Abstract_Extension {
 			return;
 		}
 
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
 		$product_ids = $wpdb->get_col(
 			$wpdb->prepare(
 				"SELECT
@@ -892,6 +1046,7 @@ class Hooks extends Abstract_Extension {
 				'_product_id'
 			)
 		);
+		// phpcs:enable
 
 		if ( ! empty( $product_ids ) ) {
 			$this->addProductToQueue( $product_ids );
@@ -941,7 +1096,7 @@ class Hooks extends Abstract_Extension {
 				}
 
 				foreach ( $value as $val ) {
-					$product_ids = $this->getProductIdsByTaxonomy( $val['name'] );
+					$product_ids = $this->get_product_ids_by_taxonomy( $val['name'] );
 
 					if ( ! empty( $product_ids ) ) {
 						if ( count( $product_ids ) > self::MAX_PRODUCTS_TO_UPDATE ) {
@@ -964,8 +1119,8 @@ class Hooks extends Abstract_Extension {
 			Api::get_instance()->add_admin_notitice(
 				sprintf(
 					/* translators: link */
-					__( 'Catalog should be re-indexed to display correct data in storefront. Please <a href="%s">force re-indexation</a>', 'woocommerce-searchanise' ),
-					Api::get_instance()->get_admin_url( 'reindex' )
+					__( 'Catalog should be re-indexed to display correct data in storefront. Please <a href="%s">force re-indexation</a>', 'smart-search-for-woocommerce' ),
+					Api::get_instance()->get_admin_url( 'reindex', true )
 				),
 				'warning'
 			);
@@ -1000,8 +1155,8 @@ class Hooks extends Abstract_Extension {
 	 *
 	 * @since 4.9.0
 	 *
-	 * @param bool    $check Whether to go forward with trashing.
-	 * @param WP_Post $post  Post object.
+	 * @param bool     $check Whether to go forward with trashing.
+	 * @param \WP_Post $post  Post object.
 	 */
 	public function preTrashPost( $check, $post ) {
 		// Disable Search page trashing.
@@ -1059,7 +1214,7 @@ class Hooks extends Abstract_Extension {
 						wp_untrash_post( $post->ID );
 						Api::get_instance()->add_admin_notitice(
 							/* translators: title */
-							sprintf( __( 'Page "%s" is used to display Searchanise search results and cannot be deleted. Page was restored from trash.', 'woocommerce-searchanise' ), $post->post_title ),
+							sprintf( __( 'Page "%s" is used to display Searchanise search results and cannot be deleted. Page was restored from trash.', 'smart-search-for-woocommerce' ), $post->post_title ),
 							'warning'
 						);
 					} elseif ( in_array( $post->post_type, Async::get_post_types() ) ) {
@@ -1110,7 +1265,7 @@ class Hooks extends Abstract_Extension {
 	/**
 	 * Adds products to Searchanise queue
 	 *
-	 * @param mixed $product_id  Product identifier or product lists.
+	 * @param int|array[] $product_id  Product identifier or product lists.
 	 */
 	private function addProductToQueue( $product_id ) {
 		if ( empty( $product_id ) ) {
@@ -1153,9 +1308,9 @@ class Hooks extends Abstract_Extension {
 	/**
 	 * Modifies query args built by get_wp_query_args() inside wc_get_products()
 	 *
-	 * @param array                     $wp_query_args WP_Query's args to modify.
-	 * @param array                     $query_vars WC_Product_Query's query variables used to build $wp_query_args.
-	 * @param WC_Product_Data_Store_CPT $object Object to work with product custom post type.
+	 * @param array                      $wp_query_args WP_Query's args to modify.
+	 * @param array                      $query_vars WC_Product_Query's query variables used to build $wp_query_args.
+	 * @param \WC_Product_Data_Store_CPT $object Object to work with product custom post type.
 	 *
 	 * @return array
 	 */

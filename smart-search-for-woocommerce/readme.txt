@@ -1,16 +1,16 @@
 === Smart Search & Product Filter for WooCommerce - Searchanise ===
 
-Contributors: searchanise
+Contributors: Searchanise
 Donate link: https://searchanise.io/woo-commerce/
-Tags: search, woocommerce search, product search, product filter, smart search, woocommerce filter, search results, search engine, live search, search plugin, advanced search, site search
-Requires at least: 4.0
-Tested up to: 6.9.0
+Tags: search, product filter, smart search, search results, advanced search
+Requires at least: 4.7
+Tested up to: 7.0
 WC requires at least: 3.0.0
 WC tested up to: 10.6.2
-Stable tag: 1.0.19
+Stable tag: 1.0.21
 Requires PHP: 5.6
-License: GPLv2 or later
-License URI: https://www.gnu.org/licenses/gpl-2.0.html
+License: GPLv3
+License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
 Advanced WooCommerce product search and filter plugin. Customizable search bar, live search suggestions and auto-generated filters for search results.
 
@@ -155,7 +155,7 @@ Check the cron settings of your store. You either do not have periodic cron jobs
 
 = There is something wrong with timestamps: the Last sync timestamp shown in the admin panel widget does not correspond to the real sync time. =
 
-Make sure you have the correct timezone set in Wordpress. Otherwise, Searchanise falls back to the default timezone which is UTC.
+Make sure you have the correct timezone set in WordPress. Otherwise, Searchanise falls back to the default timezone which is UTC.
 
 
 = Is the search supposed to replace the whole search module? =
@@ -171,7 +171,50 @@ Searchanise replaces the built-in search and processes all search queries remote
 4. Increase order value with effective upsell & cross-sell features.
 5. Leverage analytics to avoid giving no results to your customers.
 
+== External Services ==
+
+= Searchanise =
+
+This plugin connects to the Searchanise service to provide advanced search, filters, autocomplete, analytics, merchandising, and product recommendation functionality for WooCommerce stores.
+Service provider: [Searchanise](https://searchanise.io)
+
+The plugin communicates with Searchanise servers for the following purposes:
+- Store registration and configuration (store URL, administrator email address).
+- Catalog synchronization and indexing, including products, categories, attributes, images, pages, blog posts, and related searchable metadata.
+- Processing storefront search requests, including search queries, filters, sorting options, pagination, and widget requests, to provide search results, autocomplete, filtering, analytics, and recommendations.
+
+Catalog data is synchronized during initial setup, whenever indexed content changes, and when synchronization is triggered manually or by scheduled background processes. Indexed data is stored on Searchanise servers to provide search, filtering, merchandising, analytics, and recommendation features.
+The plugin loads external JavaScript assets from Searchanise servers, including https://searchserverapi1.com/widgets/v1.0/init.js. This script may load additional JavaScript resources required to display and operate the Searchanise search interface.
+
+Data is transmitted, and external assets are loaded only when the plugin is enabled and connected to the Searchanise service.
+
+[Terms of Service](https://searchanise.io/terms)
+[Privacy Policy](https://searchanise.io/privacy-policy)
+
+= Google Charts =
+
+The plugin uses the Google Charts library to render analytics and performance charts on the Searchanise dashboard within the WordPress admin area.
+
+When an admin views these analytics reports, a script is loaded from Google's servers https://www.gstatic.com/charts/loader.js (including the domains maps.googleapis.com and maps-api-ssl.google.com, used internally by the Google Charts loader). As with any externally loaded script, this request transmits standard
+browser/HTTP data (such as the requesting IP address, user agent, and referring URL) to Google. No Searchanise plugin data, store data, or personal customer data is sent to this service.
+
+[Terms of Service](https://policies.google.com/terms)
+[Privacy Policy](https://policies.google.com/privacy)
+
 == Changelog ==
+
+= 1.0.21 =
+
+* [+] Added support for legacy Searchanise hooks to ensure backward compatibility.
+* [~] Improved fallback of smart navigation.
+* [!] Fixed language validation in Weglot integration.
+* [!] Fixed the force re-indexation link on the Settings page
+
+= 1.0.20 =
+
+* [+] New registration confirmation dialog added.
+* [~] All filter name prefixes were changed from `se_` to `searchanise_`.
+* [~] Plugin code was refactored.
 
 = 1.0.19 =
 
@@ -205,7 +248,7 @@ Searchanise replaces the built-in search and processes all search queries remote
 
 * [+] - Filters integrated with WooCommerce blocks.
 * [+] - Implemented compatibility with High Performance Order Storage.
-* [~] - Updated Woo ID due to updates to Woo's billing API.
+* [~] - Updated Woo ID due to updates to WooCommerce billing API.
 * [!] - The widget with type Related/Similar Products is not displayed. Fixed.
 * [!] - The widget with type Up-sells and Cross-sells is not displayed. Fixed.
 * [!] - Setting filters in fulltext search does not work. Fixed.
@@ -282,7 +325,7 @@ Searchanise replaces the built-in search and processes all search queries remote
 * [!] 404 error may have occurred on the Search Results page. Fixed.
 * [!] Plugin failed to register in Searchanise in if Multisite mode was enabled. Fixed.
 * [!] ‘PHP Notice Undefined variable: home_block’ PHP notice may have appeared. Fixed.
-* [!] ‘Too few arguments to function SearchaniseInfo::getInfo()’ PHP error may have appeared in the”Info” tab on the Searchanise settings page. Fixed.
+* [!] ‘Too few arguments to function SearchaniseInfo::getInfo()’ PHP error may have appeared in the "Info" tab on the Searchanise settings page. Fixed.
 
 = 1.0.6 =
 
@@ -304,7 +347,7 @@ Searchanise replaces the built-in search and processes all search queries remote
 * [!] Product price for grouped products was calculated as 0 in some cases. Fixed.
 * [!] Products were not excluded from indexation in some cases even if their tags were mentioned in the "Exclude products with these tags" option. Fixed.
 * [!] JavaScript error "Uncaught SyntaxError: missing ) after argument list" occurs if single quotes were used in the "Search input jQuery selector" option.
-* [!] Checkboxes were not displayed correctly in the Searchanise admin page in Wordpress version 5.3.2 and later. Fixed.
+* [!] Checkboxes were not displayed correctly in the Searchanise admin page in WordPress version 5.3.2 and later. Fixed.
 * [!] Indexation stopped if wc_get_product() function didn't return information for product. Fixed.
 * [!] Product variants which include special symbols were not indexed. Fixed.
 * [!] Product filter didn't work if it contents '&' symbol. Fixed.
@@ -326,8 +369,7 @@ Searchanise replaces the built-in search and processes all search queries remote
 = 1.0.2 =
 
 * [+] Full-text search was added.
-* [+] Additional "By date" and "Bestselling" sortings were added for WooCommerce Search results widget.
+* [+] Additional "By date" and "Bestselling" sorting were added for WooCommerce Search results widget.
 * [+] Translation .pot file was added.
-* [~] Pluging code was refactored.
+* [~] Plugin code was refactored.
 * [~] Plugin settings were refactored.
-

@@ -28,6 +28,8 @@ return array(
     'Searchanise\\SmartWoocommerceSearch\\Profiler' => $baseDir . '/includes/helpers/class-profiler.php',
     'Searchanise\\SmartWoocommerceSearch\\Queue' => $baseDir . '/includes/queue/class-queue.php',
     'Searchanise\\SmartWoocommerceSearch\\Recommendations' => $baseDir . '/includes/widgets/class-recommendations.php',
+    'Searchanise\\SmartWoocommerceSearch\\Search_Filter_Params_DTO' => $baseDir . '/includes/dto/class-search-filter-params-dto.php',
+    'Searchanise\\SmartWoocommerceSearch\\Search_Filter_Params_Factory' => $baseDir . '/includes/factories/class-search-filter-params-factory.php',
     'Searchanise\\SmartWoocommerceSearch\\Search_Results' => $baseDir . '/includes/widgets/class-search-results.php',
     'Searchanise\\SmartWoocommerceSearch\\Searchanise_Exception' => $baseDir . '/includes/exceptions/class-searchanise-exception.php',
     'Searchanise\\SmartWoocommerceSearch\\Upgrade' => $baseDir . '/includes/install/class-upgrade.php',

@@ -79,7 +79,22 @@ class Recommendations {
 	 * @return string
 	 */
 	private function get_align_wide_class() {
-		return get_template() != 'twentythirteen' ? self::ALIGN_WIDE_CLASS : '';
+		return get_template() !== 'twentythirteen' ? self::ALIGN_WIDE_CLASS : '';
+	}
+
+	/**
+	 * Returns allowed tags in recommendation content
+	 *
+	 * @return array[]
+	 */
+	private function get_allowed_tags() {
+		return array(
+			'div' => array(
+				'class'            => array(),
+				'data-page-type'   => array(),
+				'data-product-ids' => array(),
+			),
+		);
 	}
 
 	/**
@@ -88,20 +103,11 @@ class Recommendations {
 	public function add_after_product_content() {
 		if ( is_product() ) {
 			global $product;
-			$this->wc_content = $this->add_to_content( $this->wc_content, $this->get_block_content( self::BLOCK_TYPE_PRODUCT, array( $this->get_woocommerce_class(), $this->get_align_wide_class() ), (array) $product->get_id() ) );
+			$this->wc_content = $this->add_to_content( $this->wc_content, $this->get_block_content_safe( self::BLOCK_TYPE_PRODUCT, array( $this->get_woocommerce_class(), $this->get_align_wide_class() ), (array) $product->get_id() ) );
 		}
 
 		if ( ! empty( $this->wc_content ) ) {
-			echo wp_kses(
-				$this->wc_content,
-				array(
-					'div' => array(
-						'class'            => array(),
-						'data-page-type'   => array(),
-						'data-product-ids' => array(),
-					),
-				)
-			);
+			echo wp_kses( $this->wc_content, $this->get_allowed_tags() );
 		}
 	}
 
@@ -111,29 +117,21 @@ class Recommendations {
 	public function add_woocommerce_content() {
 		// Woocommerce category page.
 		if ( is_product_category() ) {
-			$this->wc_content = $this->add_to_content( $this->wc_content, $this->get_block_content( self::BLOCK_TYPE_CATEGORY, array( $this->get_woocommerce_class(), $this->get_align_wide_class() ) ) );
+			$this->wc_content = $this->add_to_content( $this->wc_content, $this->get_block_content_safe( self::BLOCK_TYPE_CATEGORY, array( $this->get_woocommerce_class(), $this->get_align_wide_class() ) ) );
 		}
 
 		// Woocommerce default search page.
 		if ( is_search() ) {
-			$this->wc_content = $this->add_to_content( $this->wc_content, $this->get_block_content( self::BLOCK_TYPE_SEARCH, array( $this->get_woocommerce_class(), 'is-style-wide' ) ) );
+			$this->wc_content = $this->add_to_content( $this->wc_content, $this->get_block_content_safe( self::BLOCK_TYPE_SEARCH, array( $this->get_woocommerce_class(), 'is-style-wide' ) ) );
 		}
 
 		// Woocommerce home page.
 		if ( is_shop() && ! is_search() ) {
-			$this->wc_content = $this->add_to_content( $this->wc_content, $this->get_block_content( self::BLOCK_TYPE_HOME, array( $this->get_woocommerce_class(), $this->get_align_wide_class() ) ) );
+			$this->wc_content = $this->add_to_content( $this->wc_content, $this->get_block_content_safe( self::BLOCK_TYPE_HOME, array( $this->get_woocommerce_class(), $this->get_align_wide_class() ) ) );
 		}
 
 		if ( ! empty( $this->wc_content ) ) {
-			echo wp_kses(
-				$this->wc_content,
-				array(
-					'div' => array(
-						'class'          => array(),
-						'data-page-type' => array(),
-					),
-				)
-			);
+			echo wp_kses( $this->wc_content, $this->get_allowed_tags() );
 		}
 	}
 
@@ -147,12 +145,12 @@ class Recommendations {
 	public function add_word_press_content( $content ) {
 		// Woocommerce home page.
 		if ( is_front_page() ) {
-			$content = $this->add_to_content( $content, $this->get_block_content( self::BLOCK_TYPE_HOME, array( $this->get_woocommerce_class() ) ) );
+			$content = $this->add_to_content( $content, $this->get_block_content_safe( self::BLOCK_TYPE_HOME, array( $this->get_woocommerce_class() ) ) );
 		}
 
 		// Searchanise search results page.
 		if ( is_page( Api::get_instance()->get_search_results_page() ) ) {
-			$content = $this->add_to_content( $content, $this->get_block_content( self::BLOCK_TYPE_SEARCH, array( 'is-style-wide' ) ) );
+			$content = $this->add_to_content( $content, $this->get_block_content_safe( self::BLOCK_TYPE_SEARCH, array( 'is-style-wide' ) ) );
 		}
 
 		// Woocommerce cart page.
@@ -161,7 +159,7 @@ class Recommendations {
 			foreach ( WC()->cart->get_cart() as $cart_item ) {
 				$cart_product_ids[] = $cart_item['product_id'];
 			}
-			$content = $this->add_to_content( $content, $this->get_block_content( self::BLOCK_TYPE_CART, array( $this->get_woocommerce_class(), 'woocommerce-cart' ), $cart_product_ids ) );
+			$content = $this->add_to_content( $content, $this->get_block_content_safe( self::BLOCK_TYPE_CART, array( $this->get_woocommerce_class(), 'woocommerce-cart' ), $cart_product_ids ) );
 		}
 
 		return $content;
@@ -194,11 +192,11 @@ class Recommendations {
 	 *
 	 * @return string
 	 */
-	private function get_block_content( $page_type, array $classes = array(), array $product_ids = array() ) {
-		$classes[]       = get_template();
-		$product_ids_str = ! empty( $product_ids ) ? ( 'data-product-ids = "' . implode( ',', $product_ids ) . '"' ) : '';
-		$classes_str     = implode( ' ', $classes );
+	private function get_block_content_safe( $page_type, array $classes = array(), array $product_ids = array() ) {
+		$classes[]               = get_template();
+		$product_ids_str_escaped = ! empty( $product_ids ) ? ( 'data-product-ids="' . esc_attr( implode( ',', $product_ids ) ) . '"' ) : '';
+		$classes_str             = implode( ' ', $classes );
 
-		return "<div class=\"snize-recommendation-wrapper {$classes_str}\" data-page-type = \"{$page_type}\" {$product_ids_str}></div>";
+		return '<div class="snize-recommendation-wrapper ' . esc_attr( $classes_str ) . '" data-page-type="' . esc_attr( $page_type ) . "\" {$product_ids_str_escaped}></div>";
 	}
 }

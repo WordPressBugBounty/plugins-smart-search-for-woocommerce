@@ -40,25 +40,21 @@ class Admin_Dashboard {
 		$se_dashboard_css_path = SE_BASE_DIR . '/assets/css/se-dashboard.css';
 
 		$dashboard = new self();
-		wp_enqueue_script( 'google-charts', 'https://www.gstatic.com/charts/loader.js', array(), SE_PLUGIN_VERSION, false );
-		wp_enqueue_script( 'jquery-cookie', plugins_url( SE_BASE_DIR . '/assets/js/jquery.cookie.js' ), array( 'jquery' ), SE_PLUGIN_VERSION, false );
-		wp_register_script( 'se-dashboard', plugins_url( $se_dashboard_js_path ), array( 'jquery', 'google-charts', 'jquery-cookie' ), SE_PLUGIN_VERSION, true );
-		wp_register_style( 'se-dashboard', plugins_url( $se_dashboard_css_path ), array(), SE_PLUGIN_VERSION, false );
+		wp_enqueue_script( 'external-google-charts', 'https://www.gstatic.com/charts/loader.js', array(), SE_PLUGIN_VERSION, false );
+		wp_enqueue_script( 'cookie-js', plugins_url( SE_BASE_DIR . '/assets/js/cookie.min.js' ), array( 'jquery' ), SE_PLUGIN_VERSION, false );
+		wp_register_script( 'searchanise-dashboard', plugins_url( $se_dashboard_js_path ), array( 'jquery', 'external-google-charts', 'cookie-js' ), SE_PLUGIN_VERSION, true );
+		wp_register_style( 'searchanise-dashboard', plugins_url( $se_dashboard_css_path ), array(), SE_PLUGIN_VERSION, false );
 
-		wp_add_dashboard_widget( 'se_analytics', __( 'Smart Search Analytics by <span class="se-logo">Searchanise</span>', 'woocommerce-searchanise' ), array( $dashboard, 'analytics_handler' ) );
+		wp_add_dashboard_widget( 'searchanise_analytics', __( 'Smart Search Analytics by <span class="se-logo">Searchanise</span>', 'smart-search-for-woocommerce' ), array( $dashboard, 'analytics_handler' ) );
 	}
 
 	/**
-	 * Display analytics dashboard
+	 * Returns allow html tags in dashboard
+	 *
+	 * @return array
 	 */
-	public function analytics_handler() {
-		$this->lang_code      = Api::get_instance()->get_locale();
-		$se_dashboard_link    = get_admin_url( null, '/admin.php?page=searchanise' );
-		$period_selector_html = $this->render_periods_selector();
-		$language_selector    = $this->render_language_selector();
-		$checkbox_states      = $this->get_checkbox_states();
-		$translations         = $this->get_translations();
-		$allowed_html         = array(
+	public function get_allowed_html() {
+		return array(
 			'div'    => array(
 				'class' => array(),
 				'id'    => array(),
@@ -98,6 +94,14 @@ class Admin_Dashboard {
 				'class' => array(),
 			),
 		);
+	}
+
+	/**
+	 * Display analytics dashboard
+	 */
+	public function analytics_handler() {
+		$this->lang_code = Api::get_instance()->get_locale();
+		$translations    = $this->get_translations();
 
 		$dashboard_options = array(
 			'host'                   => is_ssl() ? str_replace( 'http://', 'https://', SE_SERVICE_URL ) : SE_SERVICE_URL,
@@ -109,62 +113,11 @@ class Admin_Dashboard {
 			'chart_language'         => Api::get_instance()->get_iso_lang_name( $this->lang_code ),
 		);
 
-		wp_localize_script( 'se-dashboard', 'SeDashboardOptions', $dashboard_options );
-		wp_enqueue_style( 'se-dashboard' );
-		wp_enqueue_script( 'se-dashboard' );
+		wp_localize_script( 'searchanise-dashboard', 'searchanise_dashboard_options', $dashboard_options );
+		wp_enqueue_style( 'searchanise-dashboard' );
+		wp_enqueue_script( 'searchanise-dashboard' );
 
-		$dashboard_html = <<<HTML
-	<div class="se-language-select">
-		{$language_selector}
-	</div>
-	<div class="se-dashboard-container">
-		<div id="se-chart-error" class="se-hidden">
-			<div class="se-error-contentainer">
-				<div class="se-error-content">
-					<h2>{$translations['chart_error_title']}</h2>
-					<p>{$translations['chart_error']}</p>
-				</div>
-			</div>
-		</div>
-		<ul class="se-dashboard">
-			<li class="se-analytics-select-wrapper">
-				<div class="se-date-select">
-					{$period_selector_html}
-				</div>
-				<div class="se-analytics-select">
-					<ul class="se-analytics-select-list">
-						<li><input type="checkbox" id="elm-total-searches" name="se_query[]" value="search_data" {$checkbox_states['search_data']} /><label for="elm-total-searches">{$translations['total_searches']}</label></li>
-						<li><input type="checkbox" id="elm-category-clicks" name="se_query[]" value="categories_clicks" {$checkbox_states['categories_clicks']} /><label for="elm-category-clicks">{$translations['category_clicks']}</label></li>
-						<li><input type="checkbox" id="elm-product-clicks" name="se_query[]" value="product_clicks" {$checkbox_states['product_clicks']} /><label for="elm-product-clicks">{$translations['product_clicks']}</label></li>
-						<li><input type="checkbox" id="elm-suggestion-clicks" name="se_query[]" value="suggestions_clicks" {$checkbox_states['suggestions_clicks']} /><label for="elm-suggestion-clicks">{$translations['suggestion_clicks']}</label></li>
-					</ul>
-				</div>
-				<div class="se-clear"></div>
-			</li>
-			<li class="se-graphs se-loading">
-				<div id="se-chart"></div>
-			</li>
-			<li class="se-search-results-wrapper">
-				<div class="se-top-search-queries">
-					<h3>{$translations['top_search_queries']}</h3>
-					<span class="se-no-results">{$translations['no_results']}</span>
-					<div class="se-results-content"></div>
-				</div>
-				<div class="se-top-search-no-result-queries">
-					<h3>{$translations['top_search_queries_no_results']}</h3>
-					<span class="se-no-results">{$translations['no_results']}</span>
-					<div class="se-results-content"></div>
-				</div>
-				<div class="se-clear"></div>
-			</li>
-		</ul>
-	</div>
-	<div class="se-go-dashboard">
-		<a href="{$se_dashboard_link}" class="button">{$translations['go_dashboard']}</a>
-	</div>
-HTML;
-
-		echo wp_kses( $dashboard_html, $allowed_html );
+		require_once SE_TEMPLATES_PATH . 'searchanise_dashboard.php';
 	}
 
 	/**
@@ -266,12 +219,12 @@ HTML;
 	 */
 	public function get_available_periods() {
 		return array(
-			'W'  => __( 'This week', 'woocommerce-searchanise' ),
-			'LW' => __( 'Last week', 'woocommerce-searchanise' ),
-			'M'  => __( 'This month', 'woocommerce-searchanise' ),
-			'LM' => __( 'Last month', 'woocommerce-searchanise' ),
-			'Y'  => __( 'This year', 'woocommerce-searchanise' ),
-			'LY' => __( 'Last year', 'woocommerce-searchanise' ),
+			'W'  => __( 'This week', 'smart-search-for-woocommerce' ),
+			'LW' => __( 'Last week', 'smart-search-for-woocommerce' ),
+			'M'  => __( 'This month', 'smart-search-for-woocommerce' ),
+			'LM' => __( 'Last month', 'smart-search-for-woocommerce' ),
+			'Y'  => __( 'This year', 'smart-search-for-woocommerce' ),
+			'LY' => __( 'Last year', 'smart-search-for-woocommerce' ),
 		);
 	}
 
@@ -284,9 +237,9 @@ HTML;
 		$engines_data = $this->get_dashboard_engines();
 
 		if ( ! empty( $_SESSION[ self::KEY_LANGUAGE ] ) ) {
-			$lang_code = sanitize_key( $_SESSION[ self::KEY_LANGUAGE ] );
+			$lang_code = sanitize_option( 'blog_charset', wp_unslash( $_SESSION[ self::KEY_LANGUAGE ] ) );
 		} elseif ( ! empty( $_COOKIE[ self::KEY_LANGUAGE ] ) ) {
-			$lang_code = sanitize_key( $_COOKIE[ self::KEY_LANGUAGE ] );
+			$lang_code = sanitize_option( 'blog_charset', wp_unslash( $_COOKIE[ self::KEY_LANGUAGE ] ) );
 		}
 
 		if ( ! empty( $lang_code ) && key_exists( $lang_code, $engines_data ) ) {
@@ -306,14 +259,12 @@ HTML;
 		$available_periods = $this->get_available_periods();
 
 		if ( ! empty( $_SESSION[ self::KEY_PERIOD ] ) ) {
-			$period = sanitize_key( $_SESSION[ self::KEY_PERIOD ] );
+			$period = strtoupper( sanitize_title( $_SESSION[ self::KEY_PERIOD ] ) );
 		} elseif ( ! empty( $_COOKIE[ self::KEY_PERIOD ] ) ) {
-			$period = sanitize_key( $_COOKIE[ self::KEY_PERIOD ] );
+			$period = strtoupper( sanitize_title( wp_unslash( $_COOKIE[ self::KEY_PERIOD ] ) ) );
 		}
 
-		$period = key_exists( $period, $available_periods ) ? $period : self::DEFAULT_PERIOD;
-
-		return $period;
+		return key_exists( $period, $available_periods ) ? $period : self::DEFAULT_PERIOD;
 	}
 
 	/**
@@ -346,18 +297,18 @@ HTML;
 	 */
 	public function get_translations() {
 		return array(
-			'date'                          => __( 'Date', 'woocommerce-searchanise' ),
-			'total_searches'                => __( 'Total searches', 'woocommerce-searchanise' ),
-			'product_clicks'                => __( 'Product Clicks', 'woocommerce-searchanise' ),
-			'category_clicks'               => __( 'Category Clicks', 'woocommerce-searchanise' ),
-			'suggestion_clicks'             => __( 'Suggestion Clicks', 'woocommerce-searchanise' ),
-			'go_dashboard'                  => __( 'Go to Dashboard', 'woocommerce-searchanise' ),
-			'no_results'                    => __( 'Sorry, nothing to report', 'woocommerce-searchanise' ),
-			'top_search_queries'            => __( 'Top search queries', 'woocommerce-searchanise' ),
-			'top_search_queries_no_results' => __( 'Top search with no results', 'woocommerce-searchanise' ),
-			'chart_error_title'             => __( 'Something went wrong', 'woocommerce-searchanise' ),
+			'date'                          => __( 'Date', 'smart-search-for-woocommerce' ),
+			'total_searches'                => __( 'Total searches', 'smart-search-for-woocommerce' ),
+			'product_clicks'                => __( 'Product Clicks', 'smart-search-for-woocommerce' ),
+			'category_clicks'               => __( 'Category Clicks', 'smart-search-for-woocommerce' ),
+			'suggestion_clicks'             => __( 'Suggestion Clicks', 'smart-search-for-woocommerce' ),
+			'go_dashboard'                  => __( 'Go to Dashboard', 'smart-search-for-woocommerce' ),
+			'no_results'                    => __( 'Sorry, nothing to report', 'smart-search-for-woocommerce' ),
+			'top_search_queries'            => __( 'Top search queries', 'smart-search-for-woocommerce' ),
+			'top_search_queries_no_results' => __( 'Top search with no results', 'smart-search-for-woocommerce' ),
+			'chart_error_title'             => __( 'Something went wrong', 'smart-search-for-woocommerce' ),
 			/* translators: %s: support email */
-			'chart_error'                   => sprintf( __( 'We couldn’t get the data, please try to check it later or contact <a href="mailto:%s" target="blank">Searchanise support</a>', 'woocommerce-searchanise' ), SE_SUPPORT_EMAIL ),
+			'chart_error'                   => sprintf( __( 'We couldn’t get the data, please try to check it later or contact <a href="mailto:%s" target="blank">Searchanise support</a>', 'smart-search-for-woocommerce' ), SE_SUPPORT_EMAIL ),
 		);
 	}
 

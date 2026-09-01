@@ -1,4 +1,6 @@
-<?php defined('ABSPATH') || exit; ?>
+<?php
+namespace Searchanise\SmartWoocommerceSearch;
 
-<?php 
-Searchanise\SmartWoocommerceSearch\Info::display();
+defined('ABSPATH') || exit;
+
+Info::display();

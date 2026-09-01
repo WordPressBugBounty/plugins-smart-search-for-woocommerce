@@ -47,6 +47,9 @@ class Installer {
 	public static function is_searchanise_installed() {
 		global $wpdb;
 
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.SchemaChange
 		$wc_se_settings_row = $wpdb->get_row(
 			$wpdb->prepare(
 				'SELECT * FROM information_schema.TABLES WHERE TABLE_SCHEMA = %s AND TABLE_NAME = %s',
@@ -54,6 +57,7 @@ class Installer {
 			),
 			ARRAY_A
 		);
+		// phpcs:enable
 
 		return ! empty( $wc_se_settings_row ) && Api::get_instance()->get_system_setting( 'version' ) != '';
 	}
@@ -68,9 +72,12 @@ class Installer {
 
 		$registered = false;
 
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
 		if ( self::is_searchanise_installed() ) {
 			$registered = (bool) $wpdb->get_var( $wpdb->prepare( "SELECT count(*) FROM {$wpdb->prefix}wc_se_settings WHERE name = %s", 'parent_private_key' ) );
 		}
+		// phpcs:enable
 
 		return $registered;
 	}
@@ -90,6 +97,8 @@ class Installer {
 		$can_edit_post = current_user_can( 'edit_posts' );
 
 		if ( null == $post_id ) {
+			// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+			// phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
 			$page_name = Api::get_instance()->get_system_setting( 'search_result_page' );
 			$post_id   = $wpdb->get_var(
 				$wpdb->prepare(
@@ -102,10 +111,11 @@ class Installer {
 					$page_name . '__trashed'
 				)
 			);
+			// phpcs:enable
 		}
 
 		if ( $can_edit_post && ( empty( $post_id ) || $force_update ) ) {
-			$content   = <<< JS
+			$content   = '
 <!-- wp:html -->
 <!-- Do NOT edit this page. Searchanise shows the search results here -->
 <div class="snize" id="snize_results"></div>
@@ -114,9 +124,9 @@ class Installer {
 <!-- wp:paragraph -->
 <p></p>
 <!-- /wp:paragraph -->
-JS;
+';
 			$post_data = array(
-				'post_title'     => __( 'Search results', 'woocommerce-searchanise' ),
+				'post_title'     => __( 'Search results', 'smart-search-for-woocommerce' ),
 				'comment_status' => 'closed',
 				'post_excerpt'   => '',
 				'post_content'   => $content,
@@ -152,6 +162,8 @@ JS;
 	public static function delete_search_results_page() {
 		global $wpdb;
 
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
 		$page_name = Api::get_instance()->get_system_setting( 'search_result_page' );
 		if ( is_multisite() && is_plugin_active_for_network( SE_ABSPATH ) ) {
 			$database_tables = $wpdb->get_results(
@@ -163,7 +175,7 @@ JS;
 			foreach ( $database_tables as $table ) {
 				if ( strpos( $table->name, '_posts' ) ) {
 					$table_name = esc_sql( $table->name );
-					$id = $wpdb->get_var(
+					$id         = $wpdb->get_var(
 						// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 						$wpdb->prepare( "SELECT ID FROM `{$table_name}` WHERE post_name = %s", $page_name )
 					);
@@ -179,6 +191,7 @@ JS;
 				wp_delete_post( $id, true );
 			}
 		}
+		// phpcs:enable
 
 		return true;
 	}
@@ -214,13 +227,17 @@ JS;
 			. ' KEY StoreAction (`lang_code`,`action`)'
 			. ") {$collate};";
 
+		// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared
+		// phpcs:disable PluginCheck.Security.DirectDB.UnescapedDBParameter
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
 		foreach ( $queries as $sql ) {
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-			if ( $wpdb->query( $sql ) === false ) {
+			if ( $wpdb->query( $wpdb->prepare( $sql ) ) === false ) {
 				$wpdb->print_error();
 				return false;
 			}
 		}
+		// phpcs:enable
 
 		return true;
 	}
@@ -254,5 +271,23 @@ JS;
 		}
 
 		return true;
+	}
+
+	/**
+	 * Adds searchanise caps to base roles
+	 *
+	 * @return void
+	 */
+	public static function create_caps() {
+		$roles = array( 'administrator', 'shop_manager', 'editor' );
+		$caps  = array( 'manage_searchanise_settings', 'manage_searchanise' );
+
+		foreach ( $roles as $role ) {
+			$wp_role = get_role( $role );
+
+			foreach ( $caps as $cap ) {
+				$wp_role->add_cap( $cap );
+			}
+		}
 	}
 }

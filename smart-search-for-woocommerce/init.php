@@ -5,6 +5,8 @@
  * @package Searchanise/Init
  */
 
+namespace Searchanise\SmartWoocommerceSearch;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
 }
@@ -20,14 +22,18 @@ function fn_se_define_constants() {
 	fn_se_define( 'SE_DEBUG', false );         // Print debug & error messages.
 
 	fn_se_define( 'SE_REQUEST_TIMEOUT', 30 );       // API request timeout.
+	fn_se_define( 'SE_REGISTER_TIMEOUT', 60 );      // Signup request timeout.
 	fn_se_define( 'SE_SHORT_REQUEST_TIMEOUT', 5 );  // API short request timeout.
 
 	fn_se_define( 'SE_PRODUCTS_PER_PASS', 100 );
 	fn_se_define( 'SE_CATEGORIES_PER_PASS', 500 );
 	fn_se_define( 'SE_PAGES_PER_PASS', 100 );
 
+	fn_se_define( 'SE_USE_GDDPR_REGISTRATION', true );
+	fn_se_define( 'SE_CACHE_SETTINGS', true );
+
 	fn_se_define( 'SE_VERSION', '1.3' );
-	fn_se_define( 'SE_PLUGIN_VERSION', '1.0.19' );
+	fn_se_define( 'SE_PLUGIN_VERSION', '1.0.21' );
 	fn_se_define( 'SE_MEMORY_LIMIT', '512M' );
 	fn_se_define( 'SE_MAX_ERROR_COUNT', 3 );
 	fn_se_define( 'SE_MAX_PROCESSING_TIME', 720 );
@@ -52,36 +58,37 @@ function fn_se_define_constants() {
  */
 function fn_se_define( $name, $val ) {
 	if ( ! defined( $name ) ) {
-		define( $name, $val );
+		define( $name, $val ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.VariableConstantNameFound
 	}
 }
 
-/**
- * Loads localization files from:
- *    - WP_LANG_DIR/woocommerce-searchanise/woocommerce-searchanise-LOCALE.mo
- *    - WP_LANG_DIR/plugins/woocommerce-searchanise-LOCALE.mo
- */
-function fn_se_load_plugin_textdomain() {
-	/**
-	 * Returns locale
-	 *
-	 * @since 1.0.0
-	 */
-	$locale = apply_filters( 'se_locale', get_locale(), 'woocommerce-searchanise' );
-	load_textdomain( 'woocommerce-searchanise', WP_LANG_DIR . DIRECTORY_SEPARATOR . 'woocommerce-searchanise' . DIRECTORY_SEPARATOR . 'woocommerce-searchanise-' . $locale . '.mo' );
-	load_plugin_textdomain( 'woocommerce-searchanise', false, plugin_basename( __DIR__ ) . DIRECTORY_SEPARATOR . 'i18n' );
-}
-
-if ( is_readable( __DIR__ . '/vendor/autoload.php' ) ) {
+if ( file_exists( __DIR__ . '/vendor/autoload.php' ) && is_readable( __DIR__ . '/vendor/autoload.php' ) ) {
 	require __DIR__ . '/vendor/autoload.php';
+
+	if ( file_exists( __DIR__ . '/local_conf.php' ) ) {
+		include __DIR__ . '/local_conf.php';
+	}
+
+	fn_se_define_constants();
+	Bootstrap::init();
+
+} elseif ( is_admin() ) {
+	add_action(
+		'admin_notices',
+		function () { ?>
+		<div class="notice notice-error is-dismissible">
+			<p>
+				<strong><?php esc_attr_e( 'Searchanise:', 'smart-search-for-woocommerce' ); ?></strong>&nbsp;
+				<?php
+				printf(
+					/* translators: %s: file name with path */
+					esc_html__( 'File "%s"  was not loaded. Please check file and it\'s permissions.', 'smart-search-for-woocommerce' ),
+					esc_attr( __DIR__ . '/vendor/autoload.php' )
+				)
+				?>
+			</p>
+		</div>
+			<?php
+		}
+	);
 }
-
-if ( file_exists( __DIR__ . '/local_conf.php' ) ) {
-	include __DIR__ . '/local_conf.php';
-}
-
-fn_se_define_constants();
-
-Searchanise\SmartWoocommerceSearch\Bootstrap::init();
-
-add_action( 'init', 'fn_se_load_plugin_textdomain' );

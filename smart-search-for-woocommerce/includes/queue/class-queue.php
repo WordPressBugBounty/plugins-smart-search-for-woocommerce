@@ -9,6 +9,9 @@ namespace Searchanise\SmartWoocommerceSearch;
 
 defined( 'ABSPATH' ) || exit;
 
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
+
 /**
  * Searchanise queue class
  */
@@ -475,7 +478,7 @@ class Queue {
 	/**
 	 * Adds update page action to queue
 	 *
-	 * @param array $page_ids Page ids.
+	 * @param int|array $page_ids Page ids.
 	 *
 	 * @return bool
 	 */
@@ -511,7 +514,7 @@ class Queue {
 	/**
 	 * Adds update category action to queue
 	 *
-	 * @param array $category_ids Category Ids.
+	 * @param int|array $category_ids Category Ids.
 	 *
 	 * @return bool
 	 */
@@ -582,3 +585,5 @@ class Queue {
 		return $status;
 	}
 }
+
+// phpcs:enable

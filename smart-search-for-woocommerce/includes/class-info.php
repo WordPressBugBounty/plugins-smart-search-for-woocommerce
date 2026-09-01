@@ -74,14 +74,14 @@ class Info {
 				print( wp_json_encode( $options ) );
 			}
 		} else {
-			$resync         = self::get_param( self::RESYNC, 'N' );
-			$lang_code      = self::get_param( self::LANG_CODE, Api::get_instance()->get_locale() );
-			$product_id     = self::get_param( self::PRODUCT_ID, false );
-			$product_ids    = self::get_param( self::PRODUCT_IDS, false );
-			$category_id    = self::get_param( self::CATEGORY_ID, false );
-			$category_ids   = self::get_param( self::CATEGORY_IDS, false );
-			$page_id        = self::get_param( self::PAGE_ID, false );
-			$page_ids       = self::get_param( self::PAGE_IDS, false );
+			$resync       = self::get_param( self::RESYNC, 'N' );
+			$lang_code    = self::get_param( self::LANG_CODE, Api::get_instance()->get_locale() );
+			$product_id   = self::get_param( self::PRODUCT_ID, false );
+			$product_ids  = self::get_param( self::PRODUCT_IDS, false );
+			$category_id  = self::get_param( self::CATEGORY_ID, false );
+			$category_ids = self::get_param( self::CATEGORY_IDS, false );
+			$page_id      = self::get_param( self::PAGE_ID, false );
+			$page_ids     = self::get_param( self::PAGE_IDS, false );
 
 			$product_ids  = $product_id ? $product_id : ( $product_ids ? explode( ',', $product_ids ) : 0 );
 			$category_ids = $category_id ? $category_id : ( $category_ids ? explode( ',', $category_ids ) : 0 );
@@ -150,10 +150,6 @@ class Info {
 		$options['cron_async_enabled'] = Api::get_instance()->check_cron_async_enabled() ? 'Y' : 'N';
 		$options['ajax_async_enabled'] = Api::get_instance()->check_ajax_async_enabled() ? 'Y' : 'N';
 
-		$options['max_execution_time'] = ini_get( 'max_execution_time' );
-		@set_time_limit( 0 );
-		$options['max_execution_time_after'] = ini_get( 'max_execution_time' );
-
 		$options['ignore_user_abort'] = ini_get( 'ignore_user_abort' );
 		@ignore_user_abort( 1 );
 		$options['ignore_user_abort_after'] = ini_get( 'ignore_user_abort_after' );
@@ -181,6 +177,8 @@ class Info {
 	 * @param string $default Default value.
 	 */
 	private static function get_param( $name, $default = '' ) {
-		return isset( $_REQUEST[ $name ] ) ? strtoupper( sanitize_key( $_REQUEST[ $name ] ) ) : $default;
+		return isset( $_REQUEST[ $name ] ) // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			? strtoupper( sanitize_text_field( wp_unslash( $_REQUEST[ $name ] ) ) ) // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			: $default;
 	}
 }

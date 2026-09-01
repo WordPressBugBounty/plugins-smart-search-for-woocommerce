@@ -36,8 +36,8 @@ class Fulltext_Search extends Abstract_Extension {
 
 	// Cache data.
 	const CACHE_ENABLED        = true;
-	const CACHE_PREFIX         = 'se_results_';
-	const CACHE_LAST_PREFIX    = 'se_last_results_';
+	const CACHE_PREFIX         = 'searchanise_results_';
+	const CACHE_LAST_PREFIX    = 'searchanise_last_results_';
 	const CACHE_TIME           = 60;
 	const CACHE_LAST_TIME      = 10;
 	const CACHE_DEBUG_VAR_NAME = 'nc';
@@ -117,12 +117,21 @@ class Fulltext_Search extends Abstract_Extension {
 	private $last_query_hash = '';
 
 	/**
+	 * Search_Filter_Param_DTO factory
+	 *
+	 * @var Search_Filter_Params_Factory $search_filter_params_factory
+	 */
+	private $search_filter_params_factory;
+
+	/**
 	 * Search constructor
 	 *
 	 * @param string $lang_code Lang code.
 	 */
 	public function __construct( $lang_code = null ) {
-		$this->lang_code = $lang_code ? $lang_code : Api::get_instance()->get_currently_language();
+		$this->search_filter_params_factory = new Search_Filter_Params_Factory();
+		$this->lang_code                    = $lang_code ? $lang_code : Api::get_instance()->get_currently_language();
+
 		parent::__construct();
 	}
 
@@ -164,6 +173,8 @@ class Fulltext_Search extends Abstract_Extension {
 		return array(
 			'posts_clauses_request',
 			'found_posts',
+			'woocommerce_pagination_args',
+			'paginate_links_args',
 			'posts_orderby',
 			'woocommerce_catalog_orderby',
 			'the_posts',
@@ -351,6 +362,36 @@ class Fulltext_Search extends Abstract_Extension {
 	}
 
 	/**
+	 * Modify last page of arguments for pagination.
+	 *
+	 * @param array $args Pagination arguments.
+	 *
+	 * @return array Modified pagination arguments.
+	 */
+	public function paginationArgs( $args ) {
+		return $this->paginateLinksArgs( $args );
+	}
+
+	/**
+	 * Wrapper for paginate_links_args filter to modify last page of arguments for pagination.
+	 *
+	 * @param array $args Pagination arguments.
+	 *
+	 * @return array Modified pagination arguments.
+	 */
+	public function paginateLinksArgs( $args ) {
+		if ( $this->checkSearchResults() ) {
+			$res      = $this->getSearchResult();
+			$max_page = ! empty( $res['lastPageOfItems'] ) ? $res['lastPageOfItems'] : null;
+			if ( $max_page ) {
+				$args['total'] = min( $args['total'], $max_page );
+			}
+		}
+
+		return $args;
+	}
+
+	/**
 	 * Check if this is a search results page
 	 *
 	 * @return boolean
@@ -377,7 +418,7 @@ class Fulltext_Search extends Abstract_Extension {
 				$suggestions_max_results = Api::get_instance()->get_suggestions_max_results();
 				$search_params           = $this->getSearchParams();
 				$text_find               = $search_params['q'];
-				$message                 = __( 'Did you mean:', 'woocommerce-searchanise' );
+				$message                 = __( 'Did you mean:', 'smart-search-for-woocommerce' );
 				$links                   = array();
 				$sug_count               = 0;
 
@@ -414,7 +455,7 @@ class Fulltext_Search extends Abstract_Extension {
 
 		if (
 			$this->checkSearchResults()
-			|| ( Api::get_instance()->is_navigation_enabled( $this->lang_code ) && $wp_query->is_tax( 'product_cat' ) )
+			|| ( Navigation::is_navigation_enabled( $this->lang_code ) && $wp_query->is_tax( 'product_cat' ) )
 		) {
 			// We need to calculate query hash here to use it in future.
 			$this->last_query_hash = md5( implode( ' ', $query ) );
@@ -546,8 +587,8 @@ class Fulltext_Search extends Abstract_Extension {
 	 *
 	 * @since 3.1.0
 	 *
-	 * @param string[] $clauses {
-	 *     Associative array of the clauses for the query.
+	 * @param  string[]  $clauses {
+	 *      Associative array of the clauses for the query.
 	 *
 	 *     @type string $where    The WHERE clause of the query.
 	 *     @type string $groupby  The GROUP BY clause of the query.
@@ -556,7 +597,7 @@ class Fulltext_Search extends Abstract_Extension {
 	 *     @type string $distinct The DISTINCT clause of the query.
 	 *     @type string $fields   The SELECT clause of the query.
 	 *     @type string $limits   The LIMIT clause of the query.
-	 * @param WP_Query $wp_query  The WP_Query instance (passed by reference).
+	 * @param \WP_Query $wp_query  The WP_Query instance (passed by reference).
 	 */
 	public function postsClausesRequest( $clauses, $wp_query ) {
 		global $wpdb;
@@ -585,8 +626,8 @@ class Fulltext_Search extends Abstract_Extension {
 	 *
 	 * @since 2.1.0
 	 *
-	 * @param int      $found_posts The number of posts found.
-	 * @param WP_Query $wp_query    The WP_Query instance (passed by reference).
+	 * @param int       $found_posts The number of posts found.
+	 * @param \WP_Query $wp_query    The WP_Query instance (passed by reference).
 	 */
 	public function foundPosts( $found_posts, $wp_query ) {
 		if ( $this->checkSearchResults() && $this->isSearchRequest() ) {
@@ -605,13 +646,13 @@ class Fulltext_Search extends Abstract_Extension {
 	 *
 	 * @since 2.0.0
 	 *
-	 * @param WP_Query $wp_query The WP_Query instance (passed by reference).
+	 * @param \WP_Query $wp_query The WP_Query instance (passed by reference).
 	 */
 	public function preGetPosts( $wp_query ) {
 		if ( is_search() && is_shop() ) {
 			$this->search_processed = $this->executeSearchRequest( $wp_query->query, $wp_query->query_vars, self::TYPE_TEXT_FIND, $this->lang_code );
 
-		} elseif ( Api::get_instance()->is_navigation_enabled( $this->lang_code ) && $wp_query->is_tax( 'product_cat' ) ) {
+		} elseif ( Navigation::is_navigation_enabled( $this->lang_code ) && $wp_query->is_tax( 'product_cat' ) ) {
 			$taxonomies = wc_get_attribute_taxonomies();
 			foreach ( $taxonomies as $taxonomy ) {
 				$taxonomy_name            = wc_attribute_taxonomy_name( $taxonomy->attribute_name );
@@ -653,12 +694,12 @@ class Fulltext_Search extends Abstract_Extension {
 	 *
 	 * @since 4.6.0
 	 *
-	 * @param WP_Post[]|int[]|null $posts Return an array of post data to short-circuit WP's query,
+	 * @param \WP_Post[]|int[]|null $posts Return an array of post data to short-circuit WP's query,
 	 *                                    or null to allow WP to run its normal queries.
-	 * @param WP_Query             $query The WP_Query instance (passed by reference).
+	 * @param \WP_Query             $query The WP_Query instance (passed by reference).
 	 */
 	public function postsPreQuery( $posts, $query ) {
-		if ( is_product_category() && Api::get_instance()->is_navigation_enabled( $this->lang_code ) && $query->is_tax( 'product_cat' ) ) {
+		if ( Navigation::is_navigation_enabled( $this->lang_code ) && $query->is_tax( 'product_cat' ) ) {
 			$posts = array();
 		}
 
@@ -671,8 +712,8 @@ class Fulltext_Search extends Abstract_Extension {
 	 *
 	 * @since 1.5.0
 	 *
-	 * @param array    $posts The array of retrieved posts.
-	 * @param WP_Query $query The WP_Query instance (passed by reference).
+	 * @param array     $posts The array of retrieved posts.
+	 * @param \WP_Query $query The WP_Query instance (passed by reference).
 	 */
 	public function thePosts( $posts, $query ) {
 		$this->search_processed = false;
@@ -738,7 +779,7 @@ class Fulltext_Search extends Abstract_Extension {
 		 * @param array ($sort_by, $sort_order) Sort data.
 		 * @param array $sort_mapping Sorting mapping.
 		 */
-		return (array) apply_filters( 'se_get_sortings', array( $sort_by, $sort_order ), $sort_mapping );
+		return (array) apply_filters( 'searchanise_get_sortings', array( $sort_by, $sort_order ), $sort_mapping );
 	}
 
 	/**
@@ -762,11 +803,12 @@ class Fulltext_Search extends Abstract_Extension {
 
 		$params = array();
 
-		$params['q']                        = '';
-		$params['restrictBy']['status']     = 'publish';
-		$params['restrictBy']['visibility'] = 'visible|catalog|search';
+		$params['q']                         = '';
+		$params['restrict_by']['status']     = 'publish';
+		$params['restrict_by']['visibility'] = 'visible|catalog|search';
+
 		if ( 'yes' === get_option( 'woocommerce_hide_out_of_stock_items' ) ) {
-			$params['restrictBy']['is_in_stock'] = 'Y';
+			$params['restrict_by']['is_in_stock'] = 'Y';
 		}
 
 		if ( self::TYPE_TEXT_FIND == $type ) {
@@ -785,8 +827,8 @@ class Fulltext_Search extends Abstract_Extension {
 		} else {
 			// Advanced text search.
 			// TODO: Remove $_REQUEST from here.
-			if ( ! empty( $_REQUEST['s'] ) ) {
-				$params['q'] = strtolower( trim( sanitize_key( $_REQUEST['s'] ) ) );
+			if ( ! empty( $_REQUEST['s'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				$params['q'] = strtolower( trim( sanitize_text_field( wp_unslash( $_REQUEST['s'] ) ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			}
 
 			$params['facets']           = 'false';
@@ -809,7 +851,9 @@ class Fulltext_Search extends Abstract_Extension {
 		$params['recentlyViewedProducts'] = Api::get_instance()->get_recently_viewed_product_ids();
 
 		// Prepare facets.
-		$this->prepareFiltersFromRequest( $params, $_REQUEST, $lang_code );
+		$filter_params_dto     = $this->search_filter_params_factory->create_from_request( $this->isReviewEnabled() );
+		$params['restrict_by'] = array_merge( $params['restrict_by'], $filter_params_dto->restrict_by );
+		$params['union']       = $filter_params_dto->union;
 
 		// There is no correct WooCommerce hooks for attribute counts
 		// But WooCommerce use cache to store the attributes count
@@ -872,98 +916,11 @@ class Fulltext_Search extends Abstract_Extension {
 		 * @param string $type Query type
 		 * @param string $lang_code Lang code
 		 */
-		$params = apply_filters( 'se_prepare_search_params', $params, $query, $query_vars, $type, $lang_code );
+		$params = apply_filters( 'searchanise_prepare_search_params', $params, $query, $query_vars, $type, $lang_code );
 
 		$this->setSearchParams( $params );
 
 		return $this->sendSearchAndRequest( $params, $lang_code );
-	}
-
-	/**
-	 * Parse filters from request and adds them to Searchanise search params
-	 *
-	 * @param array  $params    Searchanise search params.
-	 * @param array  $request   Search request.
-	 * @param string $lang_code Lang code.
-	 */
-	private function prepareFiltersFromRequest( array &$params, array $request, $lang_code ) {
-		if ( empty( $request ) ) {
-			return false;
-		}
-
-		$min_price     = isset( $request['min_price'] ) ? wc_clean( wp_unslash( $request['min_price'] ) ) : '';
-		$max_price     = isset( $request['max_price'] ) ? wc_clean( wp_unslash( $request['max_price'] ) ) : '';
-		$rating_filter = isset( $request['rating_filter'] ) ? array_filter( array_map( 'absint', explode( ',', wp_unslash( $request['rating_filter'] ) ) ) ) : array(); // WPCS: sanitization ok, input var ok, CSRF ok.
-
-		// Prepare price filter.
-		if ( '' !== $min_price || '' !== $max_price ) {
-			$rate = Api::get_instance()->get_currency_rate();
-
-			if ( ! empty( $rate ) && 1.0 != $rate ) {
-				if ( null !== $min_price ) {
-					$min_price *= $rate;
-				}
-
-				if ( null !== $max_price ) {
-					$max_price *= $rate;
-				}
-			}
-
-			$params['restrictBy']['price'] = "{$min_price},{$max_price}";
-
-			// Adds usergroup min price.
-			$user_groups = Api::get_instance()->get_current_usergroup_ids();
-			if ( ! empty( $user_groups ) ) {
-				$_prices = array();
-
-				foreach ( $user_groups as $usergroup_id ) {
-					$_prices[] = Api::LABEL_FOR_PRICES_USERGROUP . $usergroup_id;
-				}
-
-				$params['union']['price']['min'] = implode( '|', $_prices );
-			}
-		}
-
-		// Prepare review filter.
-		if ( ! empty( $rating_filter ) && $this->isReviewEnabled() ) {
-			$params['restrictBy']['reviews_average_score'] = implode( '|', $rating_filter );
-		}
-
-		// Preapre attributes filter.
-		foreach ( $request as $key => $value ) {
-			if ( 0 === strpos( $key, 'filter_' ) ) {
-				$attribute    = wc_sanitize_taxonomy_name( str_replace( 'filter_', '', $key ) );
-				$taxonomy     = wc_attribute_taxonomy_name( $attribute );
-				$filter_terms = ! empty( $value ) ? explode( ',', wc_clean( wp_unslash( $value ) ) ) : array();
-
-				if ( empty( $filter_terms ) || ! taxonomy_exists( $taxonomy ) || ! wc_attribute_taxonomy_id_by_name( $attribute ) ) {
-					// Invalid attribute filter.
-					continue;
-				}
-
-				$filter_terms = array_map( 'sanitize_title', $filter_terms );
-				$query_type   = ! empty( $request[ 'query_type_' . $attribute ] ) && in_array( $request[ 'query_type_' . $attribute ], array( 'and', 'or' ), true ) ? wc_clean( wp_unslash( $request[ 'query_type_' . $attribute ] ) ) : ''; // WPCS: sanitization ok, input var ok, CSRF ok.
-				$query_type   = ! empty( $query_type ) ? $query_type : 'and';
-				$attribute_id = Async::get_taxonomy_id( $attribute );
-
-				if ( 'and' == $query_type ) {
-					$params['restrictBy'][ $attribute_id ] = implode( ',', $filter_terms );
-				} else {
-					$params['restrictBy'][ $attribute_id ] = implode( '|', $filter_terms );
-				}
-			}
-		}
-
-		/**
-		 * Filters Searchanise filters from request
-		 *
-		 * @since 1.0.0
-		 *
-		 * @param array $params     Searchanise search params.
-		 * @param array $request    Search request.
-		 * @param string $lang_code Lang code.
-		 */
-		$params = apply_filters( 'se_prepare_filters_from_request', $params, $request, $lang_code );
 	}
 
 	/**
@@ -991,7 +948,7 @@ class Fulltext_Search extends Abstract_Extension {
 			}
 
 			if ( ! empty( $cat_ids ) ) {
-				$params['restrictBy']['category_ids'] = implode( '|', $cat_ids );
+				$params['restrict_by']['category_ids'] = implode( '|', $cat_ids );
 			}
 		}
 
@@ -1019,7 +976,7 @@ class Fulltext_Search extends Abstract_Extension {
 		 * @param array ($start_index, $max_results).
 		 * @param array $query_var Search variables.
 		 */
-		return apply_filters( 'se_get_limits', array( $start_index, $max_results ), $query_vars );
+		return apply_filters( 'searchanise_get_limits', array( $start_index, $max_results ), $query_vars );
 	}
 
 	/**
@@ -1052,7 +1009,7 @@ class Fulltext_Search extends Abstract_Extension {
 		 *
 		 * @param array $ordering array($sort_by, $sort_order)
 		 */
-		return apply_filters( 'se_get_default_sort_ordering', $ordering );
+		return apply_filters( 'searchanise_get_default_sort_ordering', $ordering );
 	}
 
 	/**
@@ -1080,8 +1037,8 @@ class Fulltext_Search extends Abstract_Extension {
 
 		$params = array_merge( $default_params, $params );
 
-		if ( empty( $params['restrictBy'] ) ) {
-			unset( $params['restrictBy'] );
+		if ( empty( $params['restrict_by'] ) ) {
+			unset( $params['restrict_by'] );
 		}
 
 		if ( empty( $params['union'] ) ) {
@@ -1137,7 +1094,7 @@ class Fulltext_Search extends Abstract_Extension {
 				} else {
 					$request_error = $result->get_error_message();
 					/* translators: %s: request error */
-					Logger::get_instance()->debug( sprintf( __( 'Error occurs during request %s' ), $request_error ) );
+					Logger::get_instance()->debug( sprintf( esc_html__( 'Error occurs during request %s', 'smart-search-for-woocommerce' ), esc_html( $request_error ) ) );
 				}
 			} else {
 				$result = wp_remote_get(
@@ -1153,7 +1110,7 @@ class Fulltext_Search extends Abstract_Extension {
 				} else {
 					$request_error = $result->get_error_message();
 					/* translators: %s: request error */
-					Logger::get_instance()->debug( sprintf( __( 'Error occurs during request %s' ), $request_error ) );
+					Logger::get_instance()->debug( sprintf( esc_html__( 'Error occurs during request %s', 'smart-search-for-woocommerce' ), esc_html( $request_error ) ) );
 				}
 			}
 
@@ -1240,7 +1197,7 @@ class Fulltext_Search extends Abstract_Extension {
 				remove_action( 'woocommerce_no_products_found', 'wc_no_products_found' );
 
 				// New no product message.
-				$message      = __( 'No products were found matching your selection.', 'woocommerce' );
+				$message      = __( 'No products were found matching your selection.', 'smart-search-for-woocommerce' );
 				$did_you_mean = $this->getDidYouMeanText();
 
 				echo '<p class="woocommerce-info"><span>' . esc_html( $message ) . ' ' . wp_kses( $did_you_mean, array( 'a' => array( 'href' => array() ) ) ) . '</span></p>';
@@ -1259,7 +1216,10 @@ class Fulltext_Search extends Abstract_Extension {
 	private function getIsUseRequestCache() {
 		$val = self::CACHE_ENABLED;
 
-		if ( isset( $_REQUEST[ self::CACHE_DEBUG_VAR_NAME ] ) && self::CACHE_DEBUG_KEY == $_REQUEST[ self::CACHE_DEBUG_VAR_NAME ] ) {
+		if (
+			isset( $_REQUEST[ self::CACHE_DEBUG_VAR_NAME ] ) && // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			self::CACHE_DEBUG_KEY == $_REQUEST[ self::CACHE_DEBUG_VAR_NAME ] // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		) {
 			$val = false;
 		}
 
@@ -1270,7 +1230,7 @@ class Fulltext_Search extends Abstract_Extension {
 		 *
 		 * @param string $val
 		 */
-		return (bool) apply_filters( 'se_get_is_use_request_cache', $val );
+		return (bool) apply_filters( 'searchanise_get_is_use_request_cache', $val );
 	}
 
 	/**
@@ -1433,7 +1393,7 @@ class Fulltext_Search extends Abstract_Extension {
 		 *
 		 * @param array Mapping values
 		 */
-		return apply_filters( 'se_get_sort_mapping', self::ORDER_MAP );
+		return apply_filters( 'searchanise_get_sort_mapping', self::ORDER_MAP );
 	}
 
 	/**

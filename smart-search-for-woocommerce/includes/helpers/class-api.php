@@ -61,8 +61,11 @@ class Api {
 	const POSTPONED_LOAD_PRIORITY = 99;
 
 	// Transient labels.
-	const LABEL_FOR_TRANSIENT        = 'se_transient_options_';
-	const LABEL_STATE_DATA_TRANSIENT = 'se_transient_state_data';
+	const LABEL_FOR_TRANSIENT        = 'searchanise_transient_options_';
+	const TRANSIENT_OPTION_TIMEOUT   = HOUR_IN_SECONDS;
+	const CACHE_KEYS_TTL             = HOUR_IN_SECONDS;
+	const CACHE_GROUP                = 'searchanise';
+	const LABEL_STATE_DATA_TRANSIENT = 'searchanise_transient_state_data';
 
 	const CHECK_EXPORT_STATUS_DELAY  = 60;
 
@@ -84,6 +87,36 @@ class Api {
 		}
 
 		return self::$instance;
+	}
+
+	/**
+	 * Returns cache timeout
+	 *
+	 * @return int
+	 */
+	public function get_transient_timeout() {
+		return self::TRANSIENT_OPTION_TIMEOUT;
+	}
+
+	/**
+	 * Returns transient settings key
+	 *
+	 * @param string $name Option name.
+	 * @param string $lang_code Lang code.
+	 *
+	 * @return string
+	 */
+	public function get_transient_settings_name( $name, $lang_code ) {
+		return self::LABEL_FOR_TRANSIENT . $name . $lang_code;
+	}
+
+	/**
+	 * Check if check settings is enabled
+	 *
+	 * @return bool
+	 */
+	public function is_transient_settings_enabled() {
+		return defined( 'SE_CACHE_SETTINGS' ) && SE_CACHE_SETTINGS;
 	}
 
 	/**
@@ -174,9 +207,12 @@ class Api {
 	public function get_private_keys() {
 		global $wpdb;
 
-		static $private_keys = array();
+		$private_keys = wp_cache_get( 'se_private_keys', self::CACHE_GROUP );
 
-		if ( empty( $private_keys ) ) {
+		if ( false === $private_keys ) {
+			$private_keys = array();
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 			$keys = $wpdb->get_results(
 				$wpdb->prepare(
 					"SELECT value, lang_code FROM {$wpdb->prefix}wc_se_settings WHERE name = %s",
@@ -189,6 +225,8 @@ class Api {
 				$k['lang_code']                  = $this->get_locale( $k['lang_code'] );
 				$private_keys[ $k['lang_code'] ] = $k['value'];
 			}
+
+			wp_cache_set( 'se_private_keys', $private_keys, self::CACHE_GROUP, self::CACHE_KEYS_TTL );
 		}
 
 		return $private_keys;
@@ -214,7 +252,7 @@ class Api {
 		static $check = null;
 
 		if ( null === $check ) {
-			$parent_private_key = isset( $_REQUEST['parent_private_key'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['parent_private_key'] ) ) : '';
+			$parent_private_key = isset( $_REQUEST['parent_private_key'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['parent_private_key'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
 			if (
 				empty( $parent_private_key )
@@ -235,9 +273,12 @@ class Api {
 	public function get_api_keys() {
 		global $wpdb;
 
-		static $api_keys;
+		$api_keys = wp_cache_get( 'se_api_keys', self::CACHE_GROUP );
 
-		if ( empty( $api_keys ) ) {
+		if ( false === $api_keys ) {
+			$api_keys = array();
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 			$keys = $wpdb->get_results(
 				$wpdb->prepare(
 					"SELECT
@@ -255,6 +296,8 @@ class Api {
 				$k['lang_code']              = $this->get_locale( $k['lang_code'] );
 				$api_keys[ $k['lang_code'] ] = $k['value'];
 			}
+
+			wp_cache_set( 'se_api_keys', $api_keys, self::CACHE_GROUP, self::CACHE_KEYS_TTL );
 		}
 
 		return $api_keys;
@@ -291,9 +334,12 @@ class Api {
 	public function get_export_statuses() {
 		global $wpdb;
 
-		$statuses = array();
+		$statuses = wp_cache_get( 'se_statuses', self::CACHE_GROUP );
 
-		if ( empty( $statuses ) ) {
+		if ( false === $statuses ) {
+			$statuses = array();
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 			$keys = $wpdb->get_results(
 				$wpdb->prepare(
 					"SELECT
@@ -310,6 +356,8 @@ class Api {
 				$k['lang_code']              = $this->get_locale( $k['lang_code'] );
 				$statuses[ $k['lang_code'] ] = $k['value'];
 			}
+
+			wp_cache_set( 'se_statuses', $statuses, self::CACHE_GROUP, self::CACHE_KEYS_TTL );
 		}
 
 		return $statuses;
@@ -402,6 +450,8 @@ class Api {
 	public function set_setting( $name, $lang_code, $value ) {
 		global $wpdb;
 
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->replace(
 			"{$wpdb->prefix}wc_se_settings",
 			array(
@@ -410,9 +460,11 @@ class Api {
 				'value'     => $value,
 			)
 		);
+		// phpcs:enable
 
-		$transient_name = self::LABEL_FOR_TRANSIENT . $name . $lang_code;
-		set_transient( $transient_name, $value, 24 * HOUR_IN_SECONDS );
+		if ( $this->is_transient_settings_enabled() ) {
+			set_transient( $this->get_transient_settings_name( $name, $lang_code ), $value, $this->get_transient_timeout() );
+		}
 	}
 
 	/**
@@ -424,10 +476,15 @@ class Api {
 	public function get_setting( $name, $lang_code = '' ) {
 		global $wpdb;
 
-		$transient_name  = self::LABEL_FOR_TRANSIENT . $name . $lang_code;
-		$transient_value = get_transient( $transient_name );
+		if ( $this->is_transient_settings_enabled() ) {
+			$transient_value = get_transient( $this->get_transient_settings_name( $name, $lang_code ) );
+		} else {
+			$transient_value = false;
+		}
 
 		if ( false === $transient_value ) {
+			// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+			// phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
 			$setting_value = $wpdb->get_var(
 				$wpdb->prepare(
 					"SELECT value
@@ -437,8 +494,11 @@ class Api {
 					$this->get_locale_settings( $lang_code )
 				)
 			);
+			// phpcs:enable
 
-			set_transient( $transient_name, $setting_value, 24 * HOUR_IN_SECONDS );
+			if ( $this->is_transient_settings_enabled() ) {
+				set_transient( $this->get_transient_settings_name( $name, $lang_code ), $setting_value, $this->get_transient_timeout() );
+			}
 
 			return $setting_value;
 		}
@@ -525,9 +585,12 @@ class Api {
 	public function get_last_requests() {
 		global $wpdb;
 
-		$requests = array();
+		$requests = wp_cache_get( 'se_requests', self::CACHE_GROUP );
 
-		if ( empty( $requests ) ) {
+		if ( false === $requests ) {
+			$requests = array();
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 			$keys = $wpdb->get_results(
 				$wpdb->prepare(
 					"SELECT
@@ -542,6 +605,8 @@ class Api {
 			foreach ( $keys as $k ) {
 				$requests[ $k['lang_code'] ] = $this->format_date( $k['value'] );
 			}
+
+			wp_cache_set( 'se_requests', $requests, self::CACHE_GROUP, self::CACHE_KEYS_TTL );
 		}
 
 		return $requests;
@@ -555,9 +620,12 @@ class Api {
 	public function get_last_resyncs() {
 		global $wpdb;
 
-		$resyncs = array();
+		$resyncs = wp_cache_get( 'se_resyncs', self::CACHE_GROUP );
 
-		if ( empty( $resyncs ) ) {
+		if ( false === $resyncs ) {
+			$resyncs = array();
+
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
 			$keys = $wpdb->get_results(
 				$wpdb->prepare(
 					"SELECT
@@ -572,6 +640,8 @@ class Api {
 			foreach ( $keys as $k ) {
 				$resyncs[ $k['lang_code'] ] = $this->format_date( $k['value'] );
 			}
+
+			wp_cache_set( 'se_resyncs', $resyncs, self::CACHE_GROUP, self::CACHE_KEYS_TTL );
 		}
 
 		return $resyncs;
@@ -611,6 +681,54 @@ class Api {
 	 */
 	public function set_auto_install( $value = false ) {
 		$this->set_setting( 'auto_installed', '', true == $value ? 'Y' : 'N' );
+	}
+
+	/**
+	 * Set gddpr redirect flag
+	 *
+	 * @param bool $value Flag.
+	 *
+	 * @return void
+	 */
+	public function set_gddpr_redirect( $value = true ) {
+		$this->set_setting( 'show_optin_page', '', true == $value ? 'Y' : 'N' );
+	}
+
+	/**
+	 * Check gddpr redirect flag
+	 *
+	 * @return bool
+	 */
+	public function check_gddpr_redirect() {
+		return $this->get_setting( 'show_optin_page' ) == 'Y';
+	}
+
+	/**
+	 * Set gddpr accept flag
+	 *
+	 * @param bool $value Flag.
+	 * @return void
+	 */
+	public function set_gddpr_accepted( $value = true ) {
+		$this->set_setting( 'gddpr_accepted', '', true == $value ? 'Y' : 'N' );
+	}
+
+	/**
+	 * Check gddpr accept flag
+	 *
+	 * @return bool
+	 */
+	public function check_gddpr_accepted() {
+		return $this->get_setting( 'gddpr_accepted' ) == 'Y';
+	}
+
+	/**
+	 * Returns true if gddpr functionality is enabled
+	 *
+	 * @return bool
+	 */
+	public function use_gddpr_registration() {
+		return defined( 'SE_USE_GDDPR_REGISTRATION' ) && true == SE_USE_GDDPR_REGISTRATION;
 	}
 
 	/**
@@ -1021,7 +1139,7 @@ class Api {
 	 *
 	 * @param string $type_price Price type.
 	 *
-	 * @return array
+	 * @return string|false
 	 */
 	public function get_cur_label_for_prices_usergroup( $type_price = 'price' ) {
 		switch ( $type_price ) {
@@ -1043,7 +1161,7 @@ class Api {
 		 *
 		 * @since 1.0.0
 		 */
-		$se_use_usergroups = (bool) apply_filters( 'se_is_use_usergroups', false );
+		$se_use_usergroups = (bool) apply_filters( 'searchanise_is_use_usergroups', false );
 
 		if ( ! empty( $current_user->roles ) && $se_use_usergroups && $label_price ) {
 			return $label_price . $current_user->roles[0];
@@ -1063,7 +1181,7 @@ class Api {
 		 *
 		 * @since 1.0.0
 		 */
-		return (bool) apply_filters( 'se_is_hide_empty_price', false );
+		return (bool) apply_filters( 'searchanise_is_hide_empty_price', false );
 	}
 
 	/**
@@ -1121,7 +1239,7 @@ class Api {
 		 *
 		 * @since 1.0.0
 		 */
-		return (array) apply_filters( 'se_addon_options', $ret );
+		return (array) apply_filters( 'searchanise_addon_options', $ret );
 	}
 
 	/**
@@ -1161,7 +1279,7 @@ class Api {
 				 *
 				 * @since 1.0.0
 				 */
-				$names[ $lang_code ] = 'en_US' == $lang_code ? 'English' : apply_filters( 'se_get_english_name', $lang_code );
+				$names[ $lang_code ] = 'en_US' == $lang_code ? 'English' : apply_filters( 'searchanise_get_english_name', $lang_code );
 			}
 		}
 
@@ -1209,7 +1327,7 @@ class Api {
 	 * Check and test enviroments
 	 *
 	 * @param boolean $display_errors Display flag.
-	 * @return array
+	 * @return string[]
 	 */
 	public function check_enviroments( $display_errors = true ) {
 		if (
@@ -1220,40 +1338,44 @@ class Api {
 			return array();
 		}
 
-		$errors = array();
+		$errors_safe = array();
 
 		if ( ! self::get_instance()->test_connect() ) {
 			/* translators: service url */
-			$errors[] = sprintf( __( 'Searchanise: There is no connection to Searchanise server! For Searchanise to work properly, the store server must be able to access %s. Please contact Searchanise <a href="mailto: feedback@searchanise.com">feedback@searchanise.com</a> technical support or your system administrator.', 'woocommerce-searchanise' ), SE_SERVICE_URL );
+			$errors_safe[] = wp_kses( sprintf( __( 'Searchanise: There is no connection to Searchanise server! For Searchanise to work properly, the store server must be able to access %s. Please contact Searchanise <a href="mailto: feedback@searchanise.com">feedback@searchanise.com</a> technical support or your system administrator.', 'smart-search-for-woocommerce' ), SE_SERVICE_URL ), array( 'a' => array( 'href' => array() ) ) );
 		}
 
 		if ( ! Queue::get_instance()->get_queue_status() ) {
-			$errors[] = __( 'Searchanise: We found an issue with the export of changes in your store catalog. To resolve the issue please contact Searchanise <a href="mailto:feedback@searchanise.com">feedback@searchanise.com</a> technical support.', 'woocommerce-searchanise' );
+			$errors_safe[] = wp_kses( __( 'Searchanise: We found an issue with the export of changes in your store catalog. To resolve the issue please contact Searchanise <a href="mailto:feedback@searchanise.com">feedback@searchanise.com</a> technical support.', 'smart-search-for-woocommerce' ), array( 'a' => array( 'href' => array() ) ) );
 		}
 
-		if ( ! empty( $errors ) && true == $display_errors ) {
-			foreach ( $errors as $error ) {
+		if ( ! empty( $errors_safe ) && $display_errors ) {
+			foreach ( $errors_safe as $error_safe ) {
 				add_action(
 					'admin_notices',
-					function () use ( $error ) {
-						echo '<div class="error notice"><p>' . wp_kses( $error, array( 'a' => array( 'href' => array() ) ) ) . '</p></div>';
+					function () use ( $error_safe ) {
+						echo '<div class="error notice"><p>' . wp_kses( $error_safe, array( 'a' => array( 'href' => array() ) ) ) . '</p></div>';
 					}
 				);
 			}
 		}
 
-		return $errors;
+		return $errors_safe;
 	}
 
 	/**
 	 * Get Searchanise admin url
 	 *
-	 * @param string $mode  Searchanise admin mode.
+	 * @param string|bool $mode   Searchanise admin mode.
+	 * @param bool        $secure If true, add nonce to url.
 	 *
 	 * @return string
 	 */
-	public function get_admin_url( $mode = '' ) {
-		return get_admin_url( null, 'admin.php?page=searchanise' . ( '' != $mode ? '&mode=' . $mode : '' ) );
+	public function get_admin_url( $mode = false, $secure = false ) {
+		$url = get_admin_url( null, 'admin.php?page=searchanise' );
+		$url = ! empty( $mode ) ? add_query_arg( 'searchanise_mode', $mode, $url ) : $url;
+
+		return $secure ? wp_nonce_url( $url, 'searchanise_action', 'searchanise_nonce' ) : $url;
 	}
 
 	/**
@@ -1272,7 +1394,7 @@ class Api {
 		 *
 		 * @since 1.0.0
 		 */
-		$site_url = apply_filters( 'se_get_frontend_url_pre', $site_url, $lang_code, $params );
+		$site_url = apply_filters( 'searchanise_get_frontend_url_pre', $site_url, $lang_code, $params );
 
 		$separator = strpos( $site_url, '?' ) === false ? '?' : '&';
 
@@ -1291,7 +1413,7 @@ class Api {
 		 * @param string $lang_code Lang code
 		 * @param array $params Url params
 		 */
-		return apply_filters( 'se_get_frontend_url', $url, $lang_code, $params );
+		return apply_filters( 'searchanise_get_frontend_url', $url, $lang_code, $params );
 	}
 
 	/**
@@ -1320,7 +1442,7 @@ class Api {
 			 *
 			 * @param array $active_languages
 			 */
-			$active_languages = (array) apply_filters( 'se_get_active_languages', $active_languages );
+			$active_languages = (array) apply_filters( 'searchanise_get_active_languages', $active_languages );
 		}
 
 		$engines = array();
@@ -1351,7 +1473,7 @@ class Api {
 		 * @param array $engines
 		 * @param string $lang_code
 		 */
-		return (array) apply_filters( 'se_get_engines', $engines, $lang_code );
+		return (array) apply_filters( 'searchanise_get_engines', $engines, $lang_code );
 	}
 
 	/**
@@ -1474,7 +1596,7 @@ class Api {
 
 			} else {
 				/* translators: error message */
-				$message = sprintf( __( 'Error occurs during http request: %s' ), $result->get_error_message() );
+				$message = sprintf( esc_html__( 'Error occurs during http request: %s', 'smart-search-for-woocommerce' ), esc_html( $result->get_error_message() ) );
 				$this->add_admin_notitice( $message );
 				Logger::get_instance()->error(
 					array(
@@ -1488,7 +1610,7 @@ class Api {
 		} else {
 			Logger::get_instance()->debug(
 				array(
-					'error_message' => __( 'Empty private key', 'woocommerce-searchanise' ),
+					'error_message' => __( 'Empty private key', 'smart-search-for-woocommerce' ),
 				)
 			);
 		}
@@ -1543,13 +1665,14 @@ class Api {
 		}
 
 		@ignore_user_abort( true );
-		@set_time_limit( 3600 );
+		@set_time_limit( 60 ); // phpcs:ignore Squiz.PHP.DiscouragedFunctions
 
 		if ( $this->check_auto_install() ) {
 			$this->set_auto_install( true );
 		}
 
 		$connected    = false;
+		$result       = true;
 		$current_user = wp_get_current_user();
 
 		if ( ! empty( $current_user ) ) {
@@ -1583,7 +1706,7 @@ class Api {
 				$request = wp_remote_post(
 					SE_SERVICE_URL . '/api/signup/json',
 					array(
-						'timeout' => SE_REQUEST_TIMEOUT,
+						'timeout' => SE_REGISTER_TIMEOUT,
 						'headers' => array(
 							'Content-Type' => 'application/x-www-form-urlencoded;charset=UTF-8',
 						),
@@ -1623,7 +1746,8 @@ class Api {
 						$private_key = (string) $response['keys']['private'];
 
 						if ( empty( $api_key ) || empty( $private_key ) ) {
-							return false;
+							$result = false;
+							break;
 						}
 
 						if ( empty( $parent_private_key ) ) {
@@ -1641,24 +1765,26 @@ class Api {
 						$this->echo_progress( ' Error<br />' );
 					}
 
-					return false;
+					$result = false;
+					break;
 				}
 
 				$this->set_export_status( self::EXPORT_STATUS_NONE, $lang_code );
 			}
 		} else {
 			// Empty email.
-			return false;
+			$result = false;
 		}
 
-		if ( $connected ) {
-			if ( $show_notifications ) {
-				$this->echo_progress( 'Done<br />' );
-				$this->add_admin_notitice( __( 'Congratulations, you\'ve just connected to Searchanise' ), 'success' );
-			}
+		// Restore limit.
+		@set_time_limit( 30 ); // phpcs:ignore Squiz.PHP.DiscouragedFunctions
+
+		if ( $connected && $show_notifications ) {
+			$this->echo_progress( 'Done<br />' );
+			$this->add_admin_notitice( esc_html__( 'Congratulations, you\'ve just connected to Searchanise', 'smart-search-for-woocommerce' ), 'success' );
 		}
 
-		return true;
+		return $result;
 	}
 
 	/**
@@ -1689,7 +1815,7 @@ class Api {
 		$this->send_store_timezone();
 
 		if ( $show_notifications ) {
-			$this->add_admin_notitice( __( 'The product catalog is queued for syncing', 'woocommerce-searchanise' ), 'success' );
+			$this->add_admin_notitice( esc_html__( 'The product catalog is queued for syncing', 'smart-search-for-woocommerce' ), 'success' );
 		}
 
 		return true;
@@ -1713,7 +1839,7 @@ class Api {
 
 			if ( $all_stores_done ) {
 				/* translators: admin url */
-				$this->add_admin_notitice( sprintf( __( 'Catalog indexation is complete. Use <a href="%s">Admin Panel</a> for configuration.', 'woocommerce-searchanise' ), $this->get_admin_url( '' ) ), 'success' );
+				$this->add_admin_notitice( wp_kses( sprintf( __( 'Catalog indexation is complete. Use <a href="%s">Admin Panel</a> for configuration.', 'smart-search-for-woocommerce' ), $this->get_admin_url( '' ) ), array( 'a' => array( 'href' => array() ) ) ), 'success' );
 				$this->set_notification_async_completed( true );
 			}
 		}
@@ -1754,7 +1880,7 @@ class Api {
 	/**
 	 * Check if search is allowed for Engine
 	 *
-	 * @param sting $lang_code Lang code.
+	 * @param string $lang_code Lang code.
 	 *
 	 * @return boolean
 	 */
@@ -1815,7 +1941,7 @@ class Api {
 		 *
 		 * @param int $currency_rate
 		 */
-		return apply_filters( 'se_get_currency_rate', $currency_rate );
+		return apply_filters( 'searchanise_get_currency_rate', $currency_rate );
 	}
 
 	/**
@@ -1825,7 +1951,7 @@ class Api {
 		$args = func_get_args();
 		echo '<ol style="font-family: Courier; font-size: 12px; border: 1px solid #dedede; background-color: #efefef; float: left; padding-right: 20px;">';
 		foreach ( $args as $v ) {
-			echo '<li><pre>' . esc_html( print_r( $v, true ) ) . "\n" . '</pre></li>';
+			echo '<li><pre>' . esc_html( print_r( $v, true ) ) . "\n" . '</pre></li>'; // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
 		}
 		echo '</ol><div style="clear:left;"></div>';
 	}
@@ -1965,7 +2091,7 @@ class Api {
 	public function send_store_timezone() {
 		$result             = false;
 		$parent_private_key = $this->get_parent_private_key();
-		$timezone           = wp_timezone_string();
+		$timezone           = fn_se_get_timezone_string();
 
 		if ( ! empty( $parent_private_key ) && ! empty( $timezone ) ) {
 			$result = $this->send_request(
@@ -2038,7 +2164,7 @@ class Api {
 		 * @param string $link
 		 * @param $lang_code
 		 */
-		return apply_filters( 'se_get_language_link', $link, $lang_code );
+		return apply_filters( 'searchanise_get_language_link', $link, $lang_code );
 	}
 
 	/**
@@ -2052,7 +2178,7 @@ class Api {
 		 *
 		 * @since 1.0.0
 		 */
-		$currently_language = apply_filters( 'se_get_current_language', false );
+		$currently_language = apply_filters( 'searchanise_get_current_language', false );
 
 		return ! empty( $currently_language ) ? $currently_language : $this->get_locale();
 	}
@@ -2067,6 +2193,8 @@ class Api {
 	public function get_langs_for_uninstall( $active_languages ) {
 		global $wpdb;
 
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
 		$all_langs = $wpdb->get_col(
 			$wpdb->prepare(
 				"SELECT
@@ -2077,8 +2205,59 @@ class Api {
 				'default'
 			)
 		);
+		// phpcs:enable
 
 		return array_merge( $active_languages, $all_langs );
+	}
+
+	/**
+	 * Gets all transient keys in the database with a specific prefix.
+	 *
+	 * Note that this doesn't work for sites that use a persistent object
+	 * cache, since in that case, transients are stored in memory.
+	 *
+	 * @param  string $prefix Prefix to search for.
+	 * @return array          Transient keys with prefix, or empty array on error.
+	 */
+	public function get_transient_keys_with_prefix( $prefix ) {
+		global $wpdb;
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
+		$prefix = $wpdb->esc_like( '_transient_' . $prefix );
+		$keys   = $wpdb->get_results( $wpdb->prepare( "SELECT `option_name` FROM $wpdb->options WHERE `option_name` LIKE %s", $prefix . '%' ), ARRAY_A );
+		// phpcs:enable
+
+		if ( is_wp_error( $keys ) ) {
+			return array();
+		}
+
+		return array_map(
+			function ( $key ) {
+				// Remove '_transient_' from the option name.
+				return substr( $key['option_name'], strlen( '_transient_' ) );
+			},
+			$keys
+		);
+	}
+
+	/**
+	 * Clears cache data
+	 *
+	 * @return void
+	 */
+	public function clear_cache_data() {
+		delete_transient( self::LABEL_STATE_DATA_TRANSIENT );
+
+		foreach ( $this->get_transient_keys_with_prefix( self::LABEL_FOR_TRANSIENT ) as $key ) {
+			delete_transient( $key );
+		}
+
+		wp_cache_delete( 'se_api_keys', self::CACHE_GROUP );
+		wp_cache_delete( 'se_private_keys', self::CACHE_GROUP );
+		wp_cache_delete( 'se_statuses', self::CACHE_GROUP );
+		wp_cache_delete( 'se_requests', self::CACHE_GROUP );
+		wp_cache_delete( 'se_resyncs', self::CACHE_GROUP );
 	}
 
 	/**

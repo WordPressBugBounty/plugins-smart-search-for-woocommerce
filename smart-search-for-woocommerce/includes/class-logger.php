@@ -72,6 +72,14 @@ class Logger {
 	 * @param array $options Logger options.
 	 */
 	public function __construct( $options = array() ) {
+		global $wp_filesystem;
+
+		// Ensure the filesystem is initialized and connected.
+		if ( empty( $wp_filesystem ) ) {
+			require_once ABSPATH . 'wp-admin/includes/file.php';
+			WP_Filesystem();
+		}
+
 		foreach ( $options as $option => $value ) {
 			if ( property_exists( $this, $option ) ) {
 				$this->{$option} = $value;
@@ -79,7 +87,7 @@ class Logger {
 		}
 
 		if ( ! empty( $this->log_dir ) && ! file_exists( $this->log_dir ) ) {
-			mkdir( $this->log_dir, 0777, true );
+			$wp_filesystem->mkdir( $this->log_dir );
 		}
 	}
 
@@ -120,12 +128,14 @@ class Logger {
 	 * Clear log files
 	 */
 	public function clear_logs() {
-		if ( ! empty( $this->log_dir ) && file_exists( $this->log_dir ) ) {
+		global $wp_filesystem;
+
+		if ( ! empty( $this->log_dir ) && $wp_filesystem->exists( $this->log_dir ) ) {
 			foreach ( $this->log_files as $file ) {
 				$file = rtrim( $this->log_dir, DIRECTORY_SEPARATOR ) . DIRECTORY_SEPARATOR . $file;
 
-				if ( file_exists( $file ) ) {
-					@unlink( $file );
+				if ( $wp_filesystem->exists( $file ) ) {
+					$wp_filesystem->delete( $file );
 				}
 			}
 		}
@@ -146,21 +156,14 @@ class Logger {
 		}
 
 		$date    = gmdate( 'c' );
-		$message = "Searchanise: # {$type}: " . print_r( $data, true );
+		$message = "Searchanise: # {$type}: " . print_r( $data, true ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r
 		$file    = $this->log_files[ $type ];
 
 		if ( ! empty( $this->log_dir ) && file_exists( $this->log_dir ) ) {
 			$full_path = rtrim( $this->log_dir, DIRECTORY_SEPARATOR ) . DIRECTORY_SEPARATOR . $file;
 
-			$f = fopen( $full_path, 'a+' );
-			if ( false === $f ) {
-				return;
-			}
-
-			@fwrite( $f, "\n" . $date . "\n" );
-			@fwrite( $f, $message );
-			@fwrite( $f, "\n" );
-			@fclose( $f );
+			file_put_contents( $full_path, "\n" . $date . "\n", FILE_APPEND );
+			file_put_contents( $full_path, $message . "\n", FILE_APPEND );
 		}
 	}
 
@@ -194,7 +197,7 @@ class Logger {
 	 * @return boolean
 	 */
 	public function is_log_errors_enabled() {
-		return $this->log_errors || ( isset( $_REQUEST[ self::DEBUG_LOG_VAR_NAME ] ) && self::DEBUG_KEY == $_REQUEST[ self::DEBUG_LOG_VAR_NAME ] );
+		return $this->log_errors || ( isset( $_REQUEST[ self::DEBUG_LOG_VAR_NAME ] ) && self::DEBUG_KEY == $_REQUEST[ self::DEBUG_LOG_VAR_NAME ] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	}
 
 	/**
@@ -203,7 +206,7 @@ class Logger {
 	 * @return boolean
 	 */
 	public function is_log_debug_enabled() {
-		return $this->log_debug || ( isset( $_REQUEST[ self::DEBUG_LOG_VAR_NAME ] ) && self::DEBUG_KEY == $_REQUEST[ self::DEBUG_LOG_VAR_NAME ] );
+		return $this->log_debug || ( isset( $_REQUEST[ self::DEBUG_LOG_VAR_NAME ] ) && self::DEBUG_KEY == $_REQUEST[ self::DEBUG_LOG_VAR_NAME ] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	}
 
 	/**
@@ -212,7 +215,7 @@ class Logger {
 	 * @return boolean
 	 */
 	private function is_debug_enabled() {
-		return $this->output_debug || ( isset( $_REQUEST[ self::DEBUG_VAR_NAME ] ) && self::DEBUG_KEY == $_REQUEST[ self::DEBUG_VAR_NAME ] );
+		return $this->output_debug || ( isset( $_REQUEST[ self::DEBUG_VAR_NAME ] ) && self::DEBUG_KEY == $_REQUEST[ self::DEBUG_VAR_NAME ] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 	}
 
 	/**
