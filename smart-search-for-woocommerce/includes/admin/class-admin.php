@@ -31,7 +31,7 @@ class Admin {
 
 		add_action( 'admin_init', array( $this, 'init' ) );
 		add_action( 'admin_init', array( $this, 'check_gddpr_redirect' ), 9999 );
-		add_action( 'wp_loaded', array( $this, 'register' ) );
+		add_action( 'admin_init', array( $this, 'register' ) );
 	}
 
 	/**
@@ -605,7 +605,7 @@ class Admin {
 			isset( $_REQUEST['searchanise_mode'] ) && // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			'update' == $_REQUEST['searchanise_mode'] // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		) {
-			if ( ! current_user_can( 'manage_searchanise_settings' ) ) {
+			if ( ! current_user_can( 'manage_searchanise_settings' ) || ! current_user_can( 'manage_options' ) ) {
 				wp_die( esc_html__( 'Access denied.', 'smart-search-for-woocommerce' ) );
 			}
 
@@ -614,12 +614,16 @@ class Admin {
 			}
 
 			$post        = filter_input_array( INPUT_POST, FILTER_SANITIZE_SPECIAL_CHARS );
-			$se_settings = isset( $post['se_search_input_selector'] ) ? $post : array();
+			$se_settings = isset( $post['search_input_selector'] ) ? $post : array();
 
 			if ( ! empty( $se_settings ) ) {
 				$need_reindexation = false;
 
 				foreach ( $post as $name => $val ) {
+					if ( in_array( $name, array( 'searchanise_settings_nonce', 'searchanise_mode' ) ) ) {
+						continue;
+					}
+
 					if ( $this->need_setting_reindexation( $name ) ) {
 						$old_value          = Api::get_instance()->get_system_setting( $name );
 						$need_reindexation |= $old_value != $val;

@@ -952,14 +952,16 @@ class Async {
 			$position += 5;
 		}
 
-		$system_custom_attributtes = Api::get_instance()->get_custom_attributes();
-		$custom_attributes         = $this->check_attributtes( $system_custom_attributtes );
+		$custom_attributes = $this->check_attributtes( Api::get_instance()->get_all_attributes() );
 
 		if ( ! empty( $custom_attributes ) ) {
 			foreach ( $custom_attributes as $custom ) {
-				$taxonomy  = get_taxonomy( $custom );
-				$filters[] = self::generate_filter_from_attribute( $taxonomy, $lang_code, 'select', $position );
-				$position += 5;
+				$taxonomy = get_taxonomy( $custom );
+
+				if ( false !== $taxonomy ) {
+					$filters[] = self::generate_filter_from_attribute( $taxonomy, $lang_code, 'select', $position );
+					$position += 5;
+				}
 			}
 		}
 
@@ -1097,7 +1099,7 @@ class Async {
 	public function get_excluded_product_ids() {
 		static $excluded_product_ids = array();
 
-		$excluded_tags = Api::get_instance()->get_system_setting( 'excluded_tags' );
+		$excluded_tags = Api::get_instance()->get_excluded_product_tags();
 		if ( ! empty( $excluded_tags ) && empty( $excluded_product_ids ) ) {
 			if ( ! is_array( $excluded_tags ) ) {
 				$excluded_tags = explode( ',', $excluded_tags );
@@ -2861,11 +2863,7 @@ class Async {
 	 * @return array
 	 */
 	public function get_excluded_pages() {
-		$excluded_pages = Api::get_instance()->get_system_setting( 'excluded_pages' );
-
-		if ( ! is_array( $excluded_pages ) ) {
-			$excluded_pages = explode( ',', $excluded_pages );
-		}
+		$excluded_pages = Api::get_instance()->get_excluded_pages();
 
 		/**
 		 * Returns excluded pages from indexation
@@ -2883,12 +2881,7 @@ class Async {
 	 * @return array
 	 */
 	public function get_excluded_categories() {
-		$excluded_categories = Api::get_instance()->get_system_setting( 'excluded_categories' );
-
-		if ( ! is_array( $excluded_categories ) ) {
-			$excluded_categories = explode( ',', $excluded_categories );
-		}
-
+		$excluded_categories = Api::get_instance()->get_excluded_categories();
 		/**
 		 * Returns excluded categories from indexation
 		 *
@@ -2940,6 +2933,7 @@ class Async {
 	 * @return array
 	 */
 	public function generate_custom_product_attribute() {
+		/** Get custom-post-type-ui taxonomies */
 		$custom_attributes = array();
 		$taxonomies        = get_option( 'cptui_taxonomies', array() );
 
@@ -2950,15 +2944,6 @@ class Async {
 		}
 
 		return $custom_attributes;
-	}
-
-	/**
-	 * Get custom taxonomies from taxonomies
-	 *
-	 * @return string
-	 */
-	public function get_custom_taxonomies() {
-		return get_option( 'se_custom_taxonomies', false );
 	}
 
 	/**

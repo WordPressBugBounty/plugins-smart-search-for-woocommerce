@@ -33,7 +33,7 @@ function fn_se_define_constants() {
 	fn_se_define( 'SE_CACHE_SETTINGS', true );
 
 	fn_se_define( 'SE_VERSION', '1.3' );
-	fn_se_define( 'SE_PLUGIN_VERSION', '1.0.21' );
+	fn_se_define( 'SE_PLUGIN_VERSION', '1.0.22' );
 	fn_se_define( 'SE_MEMORY_LIMIT', '512M' );
 	fn_se_define( 'SE_MAX_ERROR_COUNT', 3 );
 	fn_se_define( 'SE_MAX_PROCESSING_TIME', 720 );

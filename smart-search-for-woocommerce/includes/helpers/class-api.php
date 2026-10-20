@@ -519,11 +519,12 @@ class Api {
 	/**
 	 * Set system setting value
 	 *
-	 * @param string $name  Setting name.
-	 * @param mixed  $value Default flag.
+	 * @param string $name       Setting name.
+	 * @param mixed  $value      Default flag.
+	 * @return bool
 	 */
 	public function set_system_setting( $name, $value ) {
-		update_option( self::OPTION_PREFIX . $name, $value );
+		return update_option( self::OPTION_PREFIX . $name, $value );
 	}
 
 	/**
@@ -1021,7 +1022,51 @@ class Api {
 	public function get_color_attributes() {
 		$attributes = $this->get_system_setting( 'color_attribute' );
 
-		return is_array( $attributes ) ? $attributes : array_map( 'trim', explode( ',', $attributes ) );
+		return array_filter( is_array( $attributes ) ? $attributes : array_map( 'trim', explode( ',', $attributes ) ) );
+	}
+
+	/**
+	 * Get custom taxonomies from taxonomies
+	 *
+	 * @return array
+	 */
+	public function get_custom_taxonomies() {
+		$taxonomies = $this->get_system_setting( 'custom_taxonomies' );
+
+		return array_filter( is_array( $taxonomies ) ? $taxonomies : array_map( 'trim', explode( ',', $taxonomies ) ) );
+	}
+
+	/**
+	 * Returns product tags excluded for indexation
+	 *
+	 * @return array
+	 */
+	public function get_excluded_product_tags() {
+		$taxonomies = $this->get_system_setting( 'excluded_tags' );
+
+		return array_filter( is_array( $taxonomies ) ? $taxonomies : array_map( 'trim', explode( ',', $taxonomies ) ) );
+	}
+
+	/**
+	 * Returns pages excluded for indexation
+	 *
+	 * @return array
+	 */
+	public function get_excluded_pages() {
+		$taxonomies = $this->get_system_setting( 'excluded_pages' );
+
+		return array_filter( is_array( $taxonomies ) ? $taxonomies : array_map( 'trim', explode( ',', $taxonomies ) ) );
+	}
+
+	/**
+	 * Returns pages excluded for indexation
+	 *
+	 * @return array
+	 */
+	public function get_excluded_categories() {
+		$taxonomies = $this->get_system_setting( 'excluded_categories' );
+
+		return array_filter( is_array( $taxonomies ) ? $taxonomies : array_map( 'trim', explode( ',', $taxonomies ) ) );
 	}
 
 	/**
@@ -1032,7 +1077,7 @@ class Api {
 	public function get_size_attributes() {
 		$attributes = $this->get_system_setting( 'size_attribute' );
 
-		return is_array( $attributes ) ? $attributes : array_map( 'trim', explode( ',', $attributes ) );
+		return array_filter( is_array( $attributes ) ? $attributes : array_map( 'trim', explode( ',', $attributes ) ) );
 	}
 
 	/**
@@ -1041,14 +1086,21 @@ class Api {
 	 * @return array
 	 */
 	public function get_custom_attributes() {
-		$attributes        = $this->get_system_setting( 'custom_attribute' );
-		$custom_taxonomies = $this->get_system_setting( 'custom_taxonomies' );
+		$attributes = $this->get_system_setting( 'custom_attribute' );
 
-		$attributes = is_array( $attributes ) ? $attributes : array_map( 'trim', explode( ',', $attributes ) );
+		return array_filter( is_array( $attributes ) ? $attributes : array_map( 'trim', explode( ',', $attributes ) ) );
+	}
 
-		$custom_taxonomies = explode( ', ', $custom_taxonomies );
-
-		return array_merge( $attributes, $custom_taxonomies );
+	/**
+	 * Returns all attributes for import
+	 *
+	 * @return array
+	 */
+	public function get_all_attributes() {
+		return array_merge(
+			$this->get_custom_attributes(),
+			$this->get_custom_taxonomies()
+		);
 	}
 
 	/**
@@ -1059,7 +1111,7 @@ class Api {
 	public function get_custom_product_fields() {
 		$attributes = $this->get_system_setting( 'custom_product_fields' );
 
-		return is_array( $attributes ) ? $attributes : array_map( 'trim', explode( ',', $attributes ) );
+		return array_filter( is_array( $attributes ) ? $attributes : array_map( 'trim', explode( ',', $attributes ) ) );
 	}
 
 	/**
