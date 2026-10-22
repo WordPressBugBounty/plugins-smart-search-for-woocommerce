@@ -7,7 +7,7 @@ Requires at least: 4.7
 Tested up to: 7.0
 WC requires at least: 3.0.0
 WC tested up to: 10.6.2
-Stable tag: 1.0.22
+Stable tag: 1.0.23
 Requires PHP: 5.6
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -202,6 +202,10 @@ browser/HTTP data (such as the requesting IP address, user agent, and referring 
 [Privacy Policy](https://policies.google.com/privacy)
 
 == Changelog ==
+
+= 1.0.23 =
+
+* [!] Fixed the plugin not showing in the WooCommerce admin menu.
 
 = 1.0.22 =
 

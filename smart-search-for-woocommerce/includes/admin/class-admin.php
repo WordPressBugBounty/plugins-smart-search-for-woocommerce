@@ -32,6 +32,7 @@ class Admin {
 		add_action( 'admin_init', array( $this, 'init' ) );
 		add_action( 'admin_init', array( $this, 'check_gddpr_redirect' ), 9999 );
 		add_action( 'admin_init', array( $this, 'register' ) );
+		add_action( 'admin_menu', array( $this, 'admin_menu' ) );
 	}
 
 	/**
@@ -178,7 +179,6 @@ class Admin {
 
 		$this->searchanise_settings();
 
-		add_action( 'admin_menu', array( $this, 'admin_menu' ) );
 		add_filter( 'admin_footer_text', array( $this, 'admin_footer_text' ), 999999 );
 		add_filter( 'plugin_action_links_' . SE_PLUGIN_BASENAME, array( $this, 'admin_settings_link' ) );
 		add_action( 'admin_notices', array( $this, 'display_admin_notices' ) );
@@ -273,6 +273,10 @@ class Admin {
 	 * Add the Searchanise Admin Panel menu items.
 	 */
 	public function admin_menu() {
+		if ( Api::get_instance()->get_module_status() != 'Y' ) {
+			return;
+		}
+
 		$admin_page = add_submenu_page(
 			'woocommerce',
 			Api::get_instance()->get_woocommerce_plugin_version() ? Api::get_instance()->get_product_name() : __( 'Searchanise', 'smart-search-for-woocommerce' ),
